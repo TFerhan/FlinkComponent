@@ -63,6 +63,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.influxdb</groupId>
+            <artifactId>influxdb-client-java</artifactId>
+            <version>6.11.0</version> <!-- Use latest from Maven Central -->
+        </dependency>
+
+
 
         <!-- Logging -->
         <dependency>

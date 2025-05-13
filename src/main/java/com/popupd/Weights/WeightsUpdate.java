@@ -1,6 +1,6 @@
 package com.popupd.Weights;
 
-import com.popupd.Visualize.InfluxDBSink;
+//import com.popupd.Visualize.InfluxDBSink;
 import com.popupd.util.BourseDataDeserializationSchema;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.state.ValueState;
@@ -12,6 +12,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
@@ -113,13 +114,25 @@ public class WeightsUpdate {
         KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
                 .keyBy(data -> data.getTicker().toString());
 
-        keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
-                .process(new LogReturnWindowFunction()).print();
+        KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .process(new LogReturnWindowFunction()).keyBy(StockReturn::getTicker);
 
-        keyedPricesStream
-                .window(SlidingEventTimeWindows.of(Time.seconds(15), Time.seconds(5))) // Slide every minute
-                .process(new LogReturnWindowFunction())
-                .addSink(new InfluxDBSink());
+        KeyedStream<WeightedReturn, String> weightedReturns =  keyedWeightsStream
+                .connect(logReturnsStream)
+                .process(new WeightReturnMultiplicationFunction()).keyBy(WeightedReturn::getTicker);
+
+        SingleOutputStreamOperator<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
+                .process(new CumulativeWeightedReturnFunction());
+
+        portfolioReturn.print();
+
+
+
+
+        //keyedPricesStream
+                //.window(SlidingEventTimeWindows.of(Time.seconds(15), Time.seconds(5))) // Slide every minute
+                //.process(new LogReturnWindowFunction())
+                //.addSink(new InfluxDBSink());
 
 
 

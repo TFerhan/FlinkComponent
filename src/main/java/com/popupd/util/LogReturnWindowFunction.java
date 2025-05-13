@@ -19,7 +19,7 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
         Iterator<BourseData> iterator = iterable.iterator();
         if(iterator.hasNext()) {
             BourseData first = iterator.next();
-            double firstPrice = Double.parseDouble(first.getFieldCoursCourant().toString());
+            double firstPrice = Double.parseDouble(first.getFieldOpeningPrice().toString());
             double lastPrice = firstPrice;
 
             String  lastPriceTime = null;

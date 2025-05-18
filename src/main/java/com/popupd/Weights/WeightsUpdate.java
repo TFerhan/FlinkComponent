@@ -117,12 +117,18 @@ public class WeightsUpdate {
         KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .process(new LogReturnWindowFunction()).keyBy(StockReturn::getTicker);
 
-        KeyedStream<WeightedReturn, String> weightedReturns =  keyedWeightsStream
+        DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
                 .connect(logReturnsStream)
-                .process(new WeightReturnMultiplicationFunction()).keyBy(WeightedReturn::getTicker);
+                .process(new WeightReturnMultiplicationFunction());
 
-        SingleOutputStreamOperator<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
+
+
+        DataStream<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
+                .windowAll(TumblingEventTimeWindows.of(Time.seconds(10)))
                 .process(new CumulativeWeightedReturnFunction());
+
+
+                ;
 
         portfolioReturn.print();
 

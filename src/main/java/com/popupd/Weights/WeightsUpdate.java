@@ -27,6 +27,7 @@ import com.popupd.util.BourseData;
 import com.popupd.util.*;
 
 import java.time.Duration;
+import java.util.UUID;
 
 public class WeightsUpdate {
 
@@ -51,17 +52,19 @@ public class WeightsUpdate {
                 .setBootstrapServers("localhost:9092")
                 .setTopics("stock_weights")
                 .setGroupId("flink-weights-group")
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(new WeightStockDeserializationSchema())
                 .build();
 
-        //KafkaSource<PortfolioStatsSchema> portfolioStatsSource = KafkaSource.<PortfolioStatsSchema>builder()
-                //.setBootstrapServers("localhost:9092")
-                //.setTopics("portf_stats")
-                //.setGroupId("flink-weights-group")
-                //.setStartingOffsets(OffsetsInitializer.latest())
-                //.setDeserializer(new PortfolioStatsDeserializationSchema())
-                //.build();
+
+
+        KafkaSource<PortfolioStatsSchema> portfolioStatsSource = KafkaSource.<PortfolioStatsSchema>builder()
+                .setBootstrapServers("localhost:9092")
+                .setTopics("portf_stats")
+                .setGroupId("flink-consumer-" + UUID.randomUUID().toString())
+                .setStartingOffsets(OffsetsInitializer.latest())
+                .setDeserializer(new PortfolioStatsDeserializationSchema())
+                .build();
 
 
         WatermarkStrategy<BourseData> watermarkPriceStrategy = WatermarkStrategy
@@ -71,6 +74,11 @@ public class WeightsUpdate {
                                 .toInstant()
                                 .toEpochMilli()
                 );
+
+
+        WatermarkStrategy<PortfolioStatsSchema> watermarkStatsStrategy = WatermarkStrategy
+                .<PortfolioStatsSchema>forBoundedOutOfOrderness(Duration.ofMinutes(1))
+                .withTimestampAssigner((event, timestamp) -> event.getTimestamp());
 
 
         WatermarkStrategy<WeightStockSchema> watermarkWeightStrategy = WatermarkStrategy
@@ -108,6 +116,14 @@ public class WeightsUpdate {
                 "Kafka Weights Source"
         ).returns(WeightStockSchema.class);
 
+        DataStreamSource<PortfolioStatsSchema> portfolioStatsStream = (DataStreamSource<PortfolioStatsSchema>) env.fromSource(
+                portfolioStatsSource,
+                WatermarkStrategy.noWatermarks(),
+                "Kafka Portfolio Stats Source"
+        ).returns(PortfolioStatsSchema.class);
+
+        portfolioStatsStream.print();
+
         KeyedStream<BourseData, String> keyedPricesStream = pricesStream
                 .keyBy(data -> data.getTicker().toString());
 
@@ -115,17 +131,17 @@ public class WeightsUpdate {
                 .keyBy(data -> data.getTicker().toString());
 
         KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
-                .process(new LogReturnWindowFunction()).keyBy(StockReturn::getTicker);
+                .process(new LogReturnWindowFunction()).setParallelism(1).keyBy(StockReturn::getTicker);
 
         DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
                 .connect(logReturnsStream)
-                .process(new WeightReturnMultiplicationFunction());
+                .process(new WeightReturnMultiplicationFunction()).setParallelism(1);
 
 
 
         DataStream<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
-                .windowAll(TumblingEventTimeWindows.of(Time.seconds(10)))
-                .process(new CumulativeWeightedReturnFunction());
+                .windowAll(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .process(new CumulativeWeightedReturnFunction()).setParallelism(1);
 
 
                 ;

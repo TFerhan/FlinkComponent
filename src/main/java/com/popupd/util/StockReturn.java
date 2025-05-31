@@ -11,6 +11,7 @@ public class StockReturn {
     private double returnValue;
     private String timestamp;
 
+
     public StockReturn() {}
 
     public StockReturn(String ticker, double returnValue, String timestamp) {
@@ -31,6 +32,8 @@ public class StockReturn {
         return returnValue;
     }
 
+
+
     public void setReturnValue(double returnValue) {
         this.returnValue = returnValue;
     }
@@ -43,12 +46,15 @@ public class StockReturn {
         this.timestamp = charSequence;
     }
 
+
+
     @Override
     public String toString() {
         return "StockReturn{" +
                 "ticker='" + ticker + '\'' +
                 ", returnValue=" + returnValue +
                 ", timestamp=" + timestamp +
+
                 '}';
     }
 }

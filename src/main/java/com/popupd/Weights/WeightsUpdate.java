@@ -3,16 +3,17 @@ package com.popupd.Weights;
 //import com.popupd.Visualize.InfluxDBSink;
 import com.popupd.util.BourseDataDeserializationSchema;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.*;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
@@ -124,6 +125,13 @@ public class WeightsUpdate {
 
         portfolioStatsStream.print();
 
+        MapStateDescriptor<String, PortfolioStatsSchema> portfolioStatsDescriptor =
+                new MapStateDescriptor<>("portfolio-stats", BasicTypeInfo.STRING_TYPE_INFO, TypeInformation.of(PortfolioStatsSchema.class));
+
+        BroadcastStream<PortfolioStatsSchema> broadcastPortfolioStats = portfolioStatsStream
+                .broadcast(portfolioStatsDescriptor);
+
+
         KeyedStream<BourseData, String> keyedPricesStream = pricesStream
                 .keyBy(data -> data.getTicker().toString());
 
@@ -132,6 +140,24 @@ public class WeightsUpdate {
 
         KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .process(new LogReturnWindowFunction()).setParallelism(1).keyBy(StockReturn::getTicker);
+
+        DataStream<PortfolioStatsSchema> updatedStatsStream = logReturnsStream
+                .connect(broadcastPortfolioStats)
+                .process(new PortfolioStatsUpdater(portfolioStatsDescriptor));
+
+//        DataStream<PortfolioStatsSchema> updatedPortfolioStatsStream = portfolioStatsStream
+//                .connect(logReturnsStream)
+//                .process(new PortfolioStatsUpdateFunction()).setParallelism(1);
+//        DataStream<PortfolioStatsSchema> updatedPortfoliStatsStream =  logReturnsStream
+//                .keyBy(StockReturn::getTicker)
+//                .flatMap(new StatsUpdaterFlatMapFunction());
+
+//        KafkaSink<PortfolioStatsSchema> statsSink = KafkaSink.<PortfolioStatsSchema>builder()
+//                .setBootstrapServers("...")
+//                .setRecordSerializer(...) // Avro/JSON serializer
+//                .setTopic("portfolio-stats-topic")
+//                .build();
+//        updatedStatsStream.sinkTo(statsSink);
 
         DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
                 .connect(logReturnsStream)

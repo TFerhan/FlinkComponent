@@ -14,10 +14,10 @@ import org.apache.avro.message.SchemaStore;
 
 @org.apache.avro.specific.AvroGenerated
 public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-    private static final long serialVersionUID = 4647293861919626815L;
+    private static final long serialVersionUID = -4939629108603711334L;
 
 
-    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PortfolioStatsSchema\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"timestamp\",\"type\":\"long\"},{\"name\":\"meanReturns\",\"type\":{\"type\":\"map\",\"values\":\"double\"}},{\"name\":\"covarianceMatrix\",\"type\":{\"type\":\"map\",\"values\":{\"type\":\"map\",\"values\":\"double\"}}}]}");
+    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PortfolioStatsSchema\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"timestamp\",\"type\":\"long\"},{\"name\":\"portfolio_id\",\"type\":\"string\"},{\"name\":\"meanReturns\",\"type\":{\"type\":\"map\",\"values\":\"double\"}},{\"name\":\"covarianceMatrix\",\"type\":{\"type\":\"map\",\"values\":{\"type\":\"map\",\"values\":\"double\"}}}]}");
     public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
 
     private static final SpecificData MODEL$ = new SpecificData();
@@ -74,6 +74,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
     }
 
     private long timestamp;
+    private java.lang.CharSequence portfolio_id;
     private java.util.Map<java.lang.CharSequence,java.lang.Double> meanReturns;
     private java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> covarianceMatrix;
 
@@ -87,11 +88,13 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
     /**
      * All-args constructor.
      * @param timestamp The new value for timestamp
+     * @param portfolio_id The new value for portfolio_id
      * @param meanReturns The new value for meanReturns
      * @param covarianceMatrix The new value for covarianceMatrix
      */
-    public PortfolioStatsSchema(java.lang.Long timestamp, java.util.Map<java.lang.CharSequence,java.lang.Double> meanReturns, java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> covarianceMatrix) {
+    public PortfolioStatsSchema(java.lang.Long timestamp, java.lang.CharSequence portfolio_id, java.util.Map<java.lang.CharSequence,java.lang.Double> meanReturns, java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> covarianceMatrix) {
         this.timestamp = timestamp;
+        this.portfolio_id = portfolio_id;
         this.meanReturns = meanReturns;
         this.covarianceMatrix = covarianceMatrix;
     }
@@ -107,8 +110,9 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
     public java.lang.Object get(int field$) {
         switch (field$) {
             case 0: return timestamp;
-            case 1: return meanReturns;
-            case 2: return covarianceMatrix;
+            case 1: return portfolio_id;
+            case 2: return meanReturns;
+            case 3: return covarianceMatrix;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
     }
@@ -119,8 +123,9 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
     public void put(int field$, java.lang.Object value$) {
         switch (field$) {
             case 0: timestamp = (java.lang.Long)value$; break;
-            case 1: meanReturns = (java.util.Map<java.lang.CharSequence,java.lang.Double>)value$; break;
-            case 2: covarianceMatrix = (java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>>)value$; break;
+            case 1: portfolio_id = (java.lang.CharSequence)value$; break;
+            case 2: meanReturns = (java.util.Map<java.lang.CharSequence,java.lang.Double>)value$; break;
+            case 3: covarianceMatrix = (java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>>)value$; break;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
     }
@@ -140,6 +145,23 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
      */
     public void setTimestamp(long value) {
         this.timestamp = value;
+    }
+
+    /**
+     * Gets the value of the 'portfolio_id' field.
+     * @return The value of the 'portfolio_id' field.
+     */
+    public java.lang.CharSequence getPortfolioId() {
+        return portfolio_id;
+    }
+
+
+    /**
+     * Sets the value of the 'portfolio_id' field.
+     * @param value the value to set.
+     */
+    public void setPortfolioId(java.lang.CharSequence value) {
+        this.portfolio_id = value;
     }
 
     /**
@@ -218,6 +240,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
             implements org.apache.avro.data.RecordBuilder<PortfolioStatsSchema> {
 
         private long timestamp;
+        private java.lang.CharSequence portfolio_id;
         private java.util.Map<java.lang.CharSequence,java.lang.Double> meanReturns;
         private java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> covarianceMatrix;
 
@@ -236,13 +259,17 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
                 this.timestamp = data().deepCopy(fields()[0].schema(), other.timestamp);
                 fieldSetFlags()[0] = other.fieldSetFlags()[0];
             }
-            if (isValidValue(fields()[1], other.meanReturns)) {
-                this.meanReturns = data().deepCopy(fields()[1].schema(), other.meanReturns);
+            if (isValidValue(fields()[1], other.portfolio_id)) {
+                this.portfolio_id = data().deepCopy(fields()[1].schema(), other.portfolio_id);
                 fieldSetFlags()[1] = other.fieldSetFlags()[1];
             }
-            if (isValidValue(fields()[2], other.covarianceMatrix)) {
-                this.covarianceMatrix = data().deepCopy(fields()[2].schema(), other.covarianceMatrix);
+            if (isValidValue(fields()[2], other.meanReturns)) {
+                this.meanReturns = data().deepCopy(fields()[2].schema(), other.meanReturns);
                 fieldSetFlags()[2] = other.fieldSetFlags()[2];
+            }
+            if (isValidValue(fields()[3], other.covarianceMatrix)) {
+                this.covarianceMatrix = data().deepCopy(fields()[3].schema(), other.covarianceMatrix);
+                fieldSetFlags()[3] = other.fieldSetFlags()[3];
             }
         }
 
@@ -256,13 +283,17 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
                 this.timestamp = data().deepCopy(fields()[0].schema(), other.timestamp);
                 fieldSetFlags()[0] = true;
             }
-            if (isValidValue(fields()[1], other.meanReturns)) {
-                this.meanReturns = data().deepCopy(fields()[1].schema(), other.meanReturns);
+            if (isValidValue(fields()[1], other.portfolio_id)) {
+                this.portfolio_id = data().deepCopy(fields()[1].schema(), other.portfolio_id);
                 fieldSetFlags()[1] = true;
             }
-            if (isValidValue(fields()[2], other.covarianceMatrix)) {
-                this.covarianceMatrix = data().deepCopy(fields()[2].schema(), other.covarianceMatrix);
+            if (isValidValue(fields()[2], other.meanReturns)) {
+                this.meanReturns = data().deepCopy(fields()[2].schema(), other.meanReturns);
                 fieldSetFlags()[2] = true;
+            }
+            if (isValidValue(fields()[3], other.covarianceMatrix)) {
+                this.covarianceMatrix = data().deepCopy(fields()[3].schema(), other.covarianceMatrix);
+                fieldSetFlags()[3] = true;
             }
         }
 
@@ -306,6 +337,46 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
         }
 
         /**
+         * Gets the value of the 'portfolio_id' field.
+         * @return The value.
+         */
+        public java.lang.CharSequence getPortfolioId() {
+            return portfolio_id;
+        }
+
+
+        /**
+         * Sets the value of the 'portfolio_id' field.
+         * @param value The value of 'portfolio_id'.
+         * @return This builder.
+         */
+        public com.popupd.util.PortfolioStatsSchema.Builder setPortfolioId(java.lang.CharSequence value) {
+            validate(fields()[1], value);
+            this.portfolio_id = value;
+            fieldSetFlags()[1] = true;
+            return this;
+        }
+
+        /**
+         * Checks whether the 'portfolio_id' field has been set.
+         * @return True if the 'portfolio_id' field has been set, false otherwise.
+         */
+        public boolean hasPortfolioId() {
+            return fieldSetFlags()[1];
+        }
+
+
+        /**
+         * Clears the value of the 'portfolio_id' field.
+         * @return This builder.
+         */
+        public com.popupd.util.PortfolioStatsSchema.Builder clearPortfolioId() {
+            portfolio_id = null;
+            fieldSetFlags()[1] = false;
+            return this;
+        }
+
+        /**
          * Gets the value of the 'meanReturns' field.
          * @return The value.
          */
@@ -320,9 +391,9 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          * @return This builder.
          */
         public com.popupd.util.PortfolioStatsSchema.Builder setMeanReturns(java.util.Map<java.lang.CharSequence,java.lang.Double> value) {
-            validate(fields()[1], value);
+            validate(fields()[2], value);
             this.meanReturns = value;
-            fieldSetFlags()[1] = true;
+            fieldSetFlags()[2] = true;
             return this;
         }
 
@@ -331,7 +402,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          * @return True if the 'meanReturns' field has been set, false otherwise.
          */
         public boolean hasMeanReturns() {
-            return fieldSetFlags()[1];
+            return fieldSetFlags()[2];
         }
 
 
@@ -341,7 +412,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          */
         public com.popupd.util.PortfolioStatsSchema.Builder clearMeanReturns() {
             meanReturns = null;
-            fieldSetFlags()[1] = false;
+            fieldSetFlags()[2] = false;
             return this;
         }
 
@@ -360,9 +431,9 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          * @return This builder.
          */
         public com.popupd.util.PortfolioStatsSchema.Builder setCovarianceMatrix(java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> value) {
-            validate(fields()[2], value);
+            validate(fields()[3], value);
             this.covarianceMatrix = value;
-            fieldSetFlags()[2] = true;
+            fieldSetFlags()[3] = true;
             return this;
         }
 
@@ -371,7 +442,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          * @return True if the 'covarianceMatrix' field has been set, false otherwise.
          */
         public boolean hasCovarianceMatrix() {
-            return fieldSetFlags()[2];
+            return fieldSetFlags()[3];
         }
 
 
@@ -381,7 +452,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
          */
         public com.popupd.util.PortfolioStatsSchema.Builder clearCovarianceMatrix() {
             covarianceMatrix = null;
-            fieldSetFlags()[2] = false;
+            fieldSetFlags()[3] = false;
             return this;
         }
 
@@ -391,8 +462,9 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
             try {
                 PortfolioStatsSchema record = new PortfolioStatsSchema();
                 record.timestamp = fieldSetFlags()[0] ? this.timestamp : (java.lang.Long) defaultValue(fields()[0]);
-                record.meanReturns = fieldSetFlags()[1] ? this.meanReturns : (java.util.Map<java.lang.CharSequence,java.lang.Double>) defaultValue(fields()[1]);
-                record.covarianceMatrix = fieldSetFlags()[2] ? this.covarianceMatrix : (java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>>) defaultValue(fields()[2]);
+                record.portfolio_id = fieldSetFlags()[1] ? this.portfolio_id : (java.lang.CharSequence) defaultValue(fields()[1]);
+                record.meanReturns = fieldSetFlags()[2] ? this.meanReturns : (java.util.Map<java.lang.CharSequence,java.lang.Double>) defaultValue(fields()[2]);
+                record.covarianceMatrix = fieldSetFlags()[3] ? this.covarianceMatrix : (java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>>) defaultValue(fields()[3]);
                 return record;
             } catch (org.apache.avro.AvroMissingFieldException e) {
                 throw e;
@@ -426,6 +498,8 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
             throws java.io.IOException
     {
         out.writeLong(this.timestamp);
+
+        out.writeString(this.portfolio_id);
 
         long size0 = this.meanReturns.size();
         out.writeMapStart();
@@ -479,6 +553,8 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
         if (fieldOrder == null) {
             this.timestamp = in.readLong();
 
+            this.portfolio_id = in.readString(this.portfolio_id instanceof Utf8 ? (Utf8)this.portfolio_id : null);
+
             long size0 = in.readMapStart();
             java.util.Map<java.lang.CharSequence,java.lang.Double> m0 = this.meanReturns; // Need fresh name due to limitation of macro system
             if (m0 == null) {
@@ -526,13 +602,17 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
             }
 
         } else {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 switch (fieldOrder[i].pos()) {
                     case 0:
                         this.timestamp = in.readLong();
                         break;
 
                     case 1:
+                        this.portfolio_id = in.readString(this.portfolio_id instanceof Utf8 ? (Utf8)this.portfolio_id : null);
+                        break;
+
+                    case 2:
                         long size0 = in.readMapStart();
                         java.util.Map<java.lang.CharSequence,java.lang.Double> m0 = this.meanReturns; // Need fresh name due to limitation of macro system
                         if (m0 == null) {
@@ -550,7 +630,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
                         }
                         break;
 
-                    case 2:
+                    case 3:
                         long size1 = in.readMapStart();
                         java.util.Map<java.lang.CharSequence,java.util.Map<java.lang.CharSequence,java.lang.Double>> m1 = this.covarianceMatrix; // Need fresh name due to limitation of macro system
                         if (m1 == null) {

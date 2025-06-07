@@ -8,7 +8,10 @@ import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
@@ -63,7 +66,7 @@ public class WeightsUpdate {
                 .setBootstrapServers("localhost:9092")
                 .setTopics("portf_stats")
                 .setGroupId("flink-consumer-" + UUID.randomUUID().toString())
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(new PortfolioStatsDeserializationSchema())
                 .build();
 
@@ -123,14 +126,26 @@ public class WeightsUpdate {
                 "Kafka Portfolio Stats Source"
         ).returns(PortfolioStatsSchema.class);
 
-        portfolioStatsStream.print();
 
-        MapStateDescriptor<String, PortfolioStatsSchema> portfolioStatsDescriptor =
-                new MapStateDescriptor<>("portfolio-stats", BasicTypeInfo.STRING_TYPE_INFO, TypeInformation.of(PortfolioStatsSchema.class));
 
-        BroadcastStream<PortfolioStatsSchema> broadcastPortfolioStats = portfolioStatsStream
-                .broadcast(portfolioStatsDescriptor);
+//        SingleOutputStreamOperator<Tuple2<String, PortfolioStatsSchema>> keyedStatsStream =
+//                portfolioStatsStream
+//                        .map(stats -> Tuple2.of("portfolio", stats))
+//                        .returns(Types.TUPLE(Types.STRING, TypeInformation.of(PortfolioStatsSchema.class)))
+//                        .keyBy(t -> t.f0).iterate();
 
+
+//        portfolioStatsStream.print();
+
+//        ValueStateDescriptor<PortfolioStatsSchema> portfolioStatsDescriptor =
+//                new ValueStateDescriptor<>("portfolio-stats",TypeInformation.of(PortfolioStatsSchema.class));
+//
+//        BroadcastStream<PortfolioStatsSchema> broadcastPortfolioStats = portfolioStatsStream
+//                .broadcast(portfolioStatsDescriptor);
+
+
+        KeyedStream<PortfolioStatsSchema, String> keyedStatsStream = portfolioStatsStream
+                .keyBy(data -> data.getPortfolioId().toString());
 
         KeyedStream<BourseData, String> keyedPricesStream = pricesStream
                 .keyBy(data -> data.getTicker().toString());
@@ -141,9 +156,31 @@ public class WeightsUpdate {
         KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .process(new LogReturnWindowFunction()).setParallelism(1).keyBy(StockReturn::getTicker);
 
-        DataStream<PortfolioStatsSchema> updatedStatsStream = logReturnsStream
-                .connect(broadcastPortfolioStats)
-                .process(new PortfolioStatsUpdater(portfolioStatsDescriptor));
+        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
+                .connect(keyedStatsStream)
+                .process(new PortfolioUpdate()).setParallelism(1);
+
+        KafkaSink<PortfolioStatsSchema> kafkaSink = KafkaSink.<PortfolioStatsSchema>builder()
+                .setBootstrapServers("localhost:9092")
+                .setRecordSerializer(
+                        KafkaRecordSerializationSchema.builder()
+                                .setTopic("portf_stats")
+                                .setValueSerializationSchema(new PortfolioStatsAvroSerializationSchema())
+                                .build()
+                )
+                .build();
+
+
+        updatedPortfolioStats.sinkTo(kafkaSink);
+
+
+        updatedPortfolioStats.print();
+
+//        DataStream<PortfolioStatsSchema> updatedStatsStream = logReturnsStream
+//                .connect(broadcastPortfolioStats)
+//                .process(new PortfolioStatsUpdater(portfolioStatsDescriptor));
+//
+//        updatedStatsStream.print();
 
 //        DataStream<PortfolioStatsSchema> updatedPortfolioStatsStream = portfolioStatsStream
 //                .connect(logReturnsStream)
@@ -152,10 +189,12 @@ public class WeightsUpdate {
 //                .keyBy(StockReturn::getTicker)
 //                .flatMap(new StatsUpdaterFlatMapFunction());
 
+
+
 //        KafkaSink<PortfolioStatsSchema> statsSink = KafkaSink.<PortfolioStatsSchema>builder()
-//                .setBootstrapServers("...")
-//                .setRecordSerializer(...) // Avro/JSON serializer
-//                .setTopic("portfolio-stats-topic")
+//                .setBootstrapServers("localhost:9092")
+//                .setRecordSerializer(KafkaRecordSerializationSchema<PortfolioStatsSchema>) // Avro/JSON serializer
+//                .setTopic("portf_stats")
 //                .build();
 //        updatedStatsStream.sinkTo(statsSink);
 
@@ -172,7 +211,7 @@ public class WeightsUpdate {
 
                 ;
 
-        portfolioReturn.print();
+//        portfolioReturn.print();
 
 
 

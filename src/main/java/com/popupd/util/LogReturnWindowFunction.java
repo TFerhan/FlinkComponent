@@ -8,6 +8,7 @@ import org.apache.flink.util.Collector;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Random;
 
 public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, StockReturn, String, TimeWindow> {
 
@@ -18,8 +19,10 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
 
         Iterator<BourseData> iterator = iterable.iterator();
         if(iterator.hasNext()) {
+            Random random = new Random();
             BourseData first = iterator.next();
             double firstPrice = Double.parseDouble(first.getFieldOpeningPrice().toString());
+            firstPrice += random.nextGaussian();
             double lastPrice = firstPrice;
 
             String  lastPriceTime = null;

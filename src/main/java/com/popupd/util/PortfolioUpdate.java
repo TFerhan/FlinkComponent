@@ -1,45 +1,51 @@
 package com.popupd.util;
 
-import org.apache.flink.api.common.state.*;
-import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
+import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.time.Instant;
 
+public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema> {
 
-public class PortfolioStatsUpdater extends KeyedBroadcastProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema> {
+    private transient ValueState<PortfolioStatsSchema> latestStats;
 
-    private final MapStateDescriptor<String, PortfolioStatsSchema> statsDescriptor;
-
-    public PortfolioStatsUpdater(MapStateDescriptor<String, PortfolioStatsSchema> descriptor) {
-        this.statsDescriptor = descriptor;
+    @Override
+    public void open(Configuration config) {
+        TypeInformation<PortfolioStatsSchema> typeInfo = TypeInformation.of(PortfolioStatsSchema.class);
+        ValueStateDescriptor<PortfolioStatsSchema> statsDescriptor =
+                new ValueStateDescriptor<>("latestStats", typeInfo);
+        latestStats = getRuntimeContext().getState(statsDescriptor);
     }
 
     @Override
-    public void processElement(StockReturn returnEvent, ReadOnlyContext ctx, Collector<PortfolioStatsSchema> out) throws Exception {
-        ReadOnlyBroadcastState<String, PortfolioStatsSchema> statsState = ctx.getBroadcastState(statsDescriptor);
-
-        PortfolioStatsSchema stats = statsState.get("portfolio"); // only one in your case
-
-        if (stats != null) {
-            // Compute updated stats
-            PortfolioStatsSchema updated = updateStats(stats, returnEvent);
-            out.collect(updated); // send to Kafka sink
-
-            BroadcastState<String, PortfolioStatsSchema> writableState = (BroadcastState<String, PortfolioStatsSchema>) ctx.getBroadcastState(statsDescriptor);
-            writableState.put("portfolio", updated);
-
-            System.out.println("Updated PortfolioStats: " + updated);
+    public void processElement1(
+            StockReturn stockReturn,
+            KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema>.Context context,
+            Collector<PortfolioStatsSchema> collector
+    ) throws Exception {
+        PortfolioStatsSchema currentStats = latestStats.value();
+        if (currentStats != null) {
+            PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
+            latestStats.update(updatedStats);
+            collector.collect(updatedStats);
         }
     }
 
     @Override
-    public void processBroadcastElement(PortfolioStatsSchema incomingStats, Context ctx, Collector<PortfolioStatsSchema> out) throws Exception {
-        BroadcastState<String, PortfolioStatsSchema> state = ctx.getBroadcastState(statsDescriptor);
-        state.put("portfolio", incomingStats); // replace or update
-        System.out.println("Broadcast PortfolioStats updated: " + incomingStats);
+    public void processElement2(
+            PortfolioStatsSchema incomingStats,
+            KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema>.Context context,
+            Collector<PortfolioStatsSchema> collector
+    ) throws Exception {
+        latestStats.update(incomingStats);
+        collector.collect(incomingStats);
     }
 
     private PortfolioStatsSchema updateStats(PortfolioStatsSchema stats, StockReturn ret) {
@@ -99,7 +105,4 @@ public class PortfolioStatsUpdater extends KeyedBroadcastProcessFunction<String,
         }
         return copy;
     }
-
-
 }
-

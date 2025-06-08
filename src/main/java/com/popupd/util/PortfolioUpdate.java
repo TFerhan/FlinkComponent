@@ -4,6 +4,7 @@ import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
@@ -12,40 +13,43 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema> {
+public class PortfolioUpdate extends KeyedProcessFunction<String, StockReturn, PortfolioStatsSchema> {
 
-    private transient ValueState<PortfolioStatsSchema> latestStats;
+    private transient ValueState<PortfolioStatsSchema> globalStats;
 
     @Override
     public void open(Configuration config) {
         TypeInformation<PortfolioStatsSchema> typeInfo = TypeInformation.of(PortfolioStatsSchema.class);
         ValueStateDescriptor<PortfolioStatsSchema> statsDescriptor =
-                new ValueStateDescriptor<>("latestStats", typeInfo);
-        latestStats = getRuntimeContext().getState(statsDescriptor);
+                new ValueStateDescriptor<>("globalPortfolioStats", typeInfo);
+        globalStats = getRuntimeContext().getState(statsDescriptor);
     }
 
     @Override
-    public void processElement1(
+    public void processElement(
             StockReturn stockReturn,
-            KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema>.Context context,
+            Context context,
             Collector<PortfolioStatsSchema> collector
     ) throws Exception {
-        PortfolioStatsSchema currentStats = latestStats.value();
-        if (currentStats != null) {
-            PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
-            latestStats.update(updatedStats);
-            collector.collect(updatedStats);
-        }
-    }
+        PortfolioStatsSchema currentStats = globalStats.value();
 
-    @Override
-    public void processElement2(
-            PortfolioStatsSchema incomingStats,
-            KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema>.Context context,
-            Collector<PortfolioStatsSchema> collector
-    ) throws Exception {
-        latestStats.update(incomingStats);
-        collector.collect(incomingStats);
+        // Initialize the state if it's null
+        if (currentStats == null) {
+            currentStats = new PortfolioStatsSchema();
+            currentStats.setMeanReturns(new HashMap<>());
+            currentStats.setCovarianceMatrix(new HashMap<>());
+            currentStats.setTimestamp(Instant.now().toEpochMilli());
+            currentStats.setPortfolioId("portfolio-1");
+        }
+
+        // Update the stats
+        PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
+
+        // Update the state
+        globalStats.update(updatedStats);
+
+        // Optionally, produce the updated stats downstream (if needed)
+        collector.collect(updatedStats);
     }
 
     private PortfolioStatsSchema updateStats(PortfolioStatsSchema stats, StockReturn ret) {
@@ -71,19 +75,11 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
             double covOld = covMatrix.getOrDefault(symbol, new HashMap<>())
                     .getOrDefault(otherSymbol, 0.0);
 
-            // Return of other asset — assume 0 if no return yet (or keep previous)
-            double retOther = 0.0;
-            if (symbol.equals(otherSymbol)) {
-                retOther = retValue;  // self-covariance
-            } else {
-                // estimate using old mean if no current return
-                retOther = otherMean;
-            }
+            double retOther = symbol.equals(otherSymbol) ? retValue : otherMean;
 
             double deltaCov = ((retValue - oldMean) * (retOther - otherMean) - covOld) / newCount;
             double covNew = covOld + deltaCov;
 
-            // symmetric matrix
             covMatrix.computeIfAbsent(symbol, k -> new HashMap<>()).put(otherSymbol, covNew);
             covMatrix.computeIfAbsent(otherSymbol, k -> new HashMap<>()).put(symbol, covNew);
         }
@@ -92,7 +88,6 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         updated.setMeanReturns(meanReturns);
         updated.setCovarianceMatrix(covMatrix);
         updated.setTimestamp(Instant.now().toEpochMilli());
-
 
         return updated;
     }

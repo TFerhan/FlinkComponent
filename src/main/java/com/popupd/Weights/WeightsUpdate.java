@@ -15,6 +15,7 @@ import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.contrib.streaming.state.RocksDBStateBackend;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.*;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -40,6 +41,9 @@ public class WeightsUpdate {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // Use event time for the application
+        String checkpointPath = "file://" + System.getProperty("user.home") + "/my-flink-checkpoints";
+        RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(checkpointPath, true);
+        env.setStateBackend(rocksDBStateBackend);
 
         // Configure watermark interval
         env.getConfig().setAutoWatermarkInterval(1000);
@@ -64,7 +68,7 @@ public class WeightsUpdate {
 
         KafkaSource<PortfolioStatsSchema> portfolioStatsSource = KafkaSource.<PortfolioStatsSchema>builder()
                 .setBootstrapServers("localhost:9092")
-                .setTopics("portf_stats")
+                .setTopics("portfStats")
                 .setGroupId("flink-consumer-" + UUID.randomUUID().toString())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(new PortfolioStatsDeserializationSchema())
@@ -156,22 +160,32 @@ public class WeightsUpdate {
         KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .process(new LogReturnWindowFunction()).setParallelism(1).keyBy(StockReturn::getTicker);
 
+
+
+//        logReturnsStream.print();
+
+//        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
+//                .connect(keyedStatsStream)
+//                .process(new PortfolioUpdate()).setParallelism(1);
+
         DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
-                .connect(keyedStatsStream)
-                .process(new PortfolioUpdate()).setParallelism(1);
-
-        KafkaSink<PortfolioStatsSchema> kafkaSink = KafkaSink.<PortfolioStatsSchema>builder()
-                .setBootstrapServers("localhost:9092")
-                .setRecordSerializer(
-                        KafkaRecordSerializationSchema.builder()
-                                .setTopic("portf_stats")
-                                .setValueSerializationSchema(new PortfolioStatsAvroSerializationSchema())
-                                .build()
-                )
-                .build();
+                .process(new PortfolioUpdate())
+                .name("Portfolio Stats Update").setParallelism(1);
 
 
-        updatedPortfolioStats.sinkTo(kafkaSink);
+
+//        KafkaSink<PortfolioStatsSchema> kafkaSink = KafkaSink.<PortfolioStatsSchema>builder()
+//                .setBootstrapServers("localhost:9092")
+//                .setRecordSerializer(
+//                        KafkaRecordSerializationSchema.builder()
+//                                .setTopic("portf_stats")
+//                                .setValueSerializationSchema(new PortfolioStatsAvroSerializationSchema())
+//                                .build()
+//                )
+//                .build();
+//
+//
+//        updatedPortfolioStats.sinkTo(kafkaSink);
 
 
         updatedPortfolioStats.print();

@@ -40,10 +40,11 @@ public class WeightsUpdate {
         // Set up the streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // Use event time for the application
-        String checkpointPath = "file://" + System.getProperty("user.home") + "/my-flink-checkpoints";
-        RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(checkpointPath, true);
-        env.setStateBackend(rocksDBStateBackend);
+//        env.enableCheckpointing(60000); // every 60 seconds
+
+//        String checkpointPath = "file:///C:/Users/carin/my-flink-checkpoint";
+//        RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(checkpointPath, true);
+//        env.setStateBackend(rocksDBStateBackend);
 
         // Configure watermark interval
         env.getConfig().setAutoWatermarkInterval(1000);
@@ -51,7 +52,7 @@ public class WeightsUpdate {
         KafkaSource<BourseData> priceSource = KafkaSource.<BourseData>builder()
                 .setBootstrapServers("localhost:9092")
                 .setTopics("intraday-stock-prices")
-                .setGroupId("flink-prices-group")
+                .setGroupId("flink-prices-"+ UUID.randomUUID().toString())
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(new BourseDataDeserializationSchema())
                 .build();
@@ -59,8 +60,8 @@ public class WeightsUpdate {
         KafkaSource<WeightStockSchema> weightSource = KafkaSource.<WeightStockSchema>builder()
                 .setBootstrapServers("localhost:9092")
                 .setTopics("stock_weights")
-                .setGroupId("flink-weights-group")
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId("flink-weights-"+ UUID.randomUUID().toString())
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(new WeightStockDeserializationSchema())
                 .build();
 
@@ -157,8 +158,12 @@ public class WeightsUpdate {
         KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
                 .keyBy(data -> data.getTicker().toString());
 
-        KeyedStream<StockReturn, String> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
-                .process(new LogReturnWindowFunction()).setParallelism(1).keyBy(StockReturn::getTicker);
+        DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
+                .process(new LogReturnWindowFunction()).setParallelism(1);
+
+
+
+
 
 
 
@@ -168,7 +173,8 @@ public class WeightsUpdate {
 //                .connect(keyedStatsStream)
 //                .process(new PortfolioUpdate()).setParallelism(1);
 
-        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
+        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream.keyBy(StockReturn::getPortfolioId)
+                .connect(keyedStatsStream)
                 .process(new PortfolioUpdate())
                 .name("Portfolio Stats Update").setParallelism(1);
 
@@ -188,7 +194,7 @@ public class WeightsUpdate {
 //        updatedPortfolioStats.sinkTo(kafkaSink);
 
 
-        updatedPortfolioStats.print();
+//        updatedPortfolioStats.print();
 
 //        DataStream<PortfolioStatsSchema> updatedStatsStream = logReturnsStream
 //                .connect(broadcastPortfolioStats)
@@ -213,7 +219,7 @@ public class WeightsUpdate {
 //        updatedStatsStream.sinkTo(statsSink);
 
         DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
-                .connect(logReturnsStream)
+                .connect(logReturnsStream.keyBy(StockReturn::getTicker))
                 .process(new WeightReturnMultiplicationFunction()).setParallelism(1);
 
 

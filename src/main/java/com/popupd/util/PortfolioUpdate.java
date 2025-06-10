@@ -1,5 +1,6 @@
 package com.popupd.util;
 
+import org.apache.avro.util.Utf8;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -10,10 +11,12 @@ import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class PortfolioUpdate extends KeyedProcessFunction<String, StockReturn, PortfolioStatsSchema> {
+public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn, PortfolioStatsSchema, PortfolioStatsSchema> {
 
     private transient ValueState<PortfolioStatsSchema> globalStats;
 
@@ -22,11 +25,12 @@ public class PortfolioUpdate extends KeyedProcessFunction<String, StockReturn, P
         TypeInformation<PortfolioStatsSchema> typeInfo = TypeInformation.of(PortfolioStatsSchema.class);
         ValueStateDescriptor<PortfolioStatsSchema> statsDescriptor =
                 new ValueStateDescriptor<>("globalPortfolioStats", typeInfo);
+
         globalStats = getRuntimeContext().getState(statsDescriptor);
     }
 
     @Override
-    public void processElement(
+    public void processElement1(
             StockReturn stockReturn,
             Context context,
             Collector<PortfolioStatsSchema> collector
@@ -35,69 +39,83 @@ public class PortfolioUpdate extends KeyedProcessFunction<String, StockReturn, P
 
         // Initialize the state if it's null
         if (currentStats == null) {
-            currentStats = new PortfolioStatsSchema();
-            currentStats.setMeanReturns(new HashMap<>());
-            currentStats.setCovarianceMatrix(new HashMap<>());
-            currentStats.setTimestamp(Instant.now().toEpochMilli());
-            currentStats.setPortfolioId("portfolio-1");
+            return;
         }
 
         // Update the stats
-        PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
+        synchronized (currentStats) {
 
-        // Update the state
-        globalStats.update(updatedStats);
+            PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
 
-        // Optionally, produce the updated stats downstream (if needed)
-        collector.collect(updatedStats);
+            // Update the state
+            globalStats.update(updatedStats);
+
+            // Optionally, produce the updated stats downstream (if needed)
+            collector.collect(updatedStats);
+        }
+    }
+
+    @Override
+    public void processElement2(PortfolioStatsSchema newStats, Context ctx, Collector<PortfolioStatsSchema> out) throws Exception {
+        globalStats.update(newStats);
+
     }
 
     private PortfolioStatsSchema updateStats(PortfolioStatsSchema stats, StockReturn ret) {
         String symbol = ret.getTicker();
         double retValue = ret.getReturnValue();
+        Utf8 utf8Symbol = new Utf8(symbol);
+        Map<CharSequence, Double> meanReturns = stats.getMeanReturns();
+        Map<CharSequence, Map<CharSequence, Double>> covMatrix = stats.getCovarianceMatrix();
 
-        Map<CharSequence, Double> meanReturns = new HashMap<>(stats.getMeanReturns());
-        Map<CharSequence, Map<CharSequence, Double>> covMatrix = deepCopyCovMatrix(stats.getCovarianceMatrix());
-
-        int count = 100;  // or compute from timestamp if needed
+        int count = 100;
         int newCount = count + 1;
 
-        // Step 1: Old mean
-        double oldMean = meanReturns.getOrDefault(symbol, 0.0);
-
-        // Step 2: Update mean
+        double oldMean = meanReturns.getOrDefault(utf8Symbol, 0.0);
         double newMean = oldMean + (retValue - oldMean) / newCount;
-        meanReturns.put(symbol, newMean);
 
-        // Step 3: Update covariance matrix
+
+        if(oldMean != 0.0 ) {
+            meanReturns.put(symbol, newMean);
+        }
+
+
+
         for (CharSequence otherSymbol : meanReturns.keySet()) {
-            double otherMean = meanReturns.get(otherSymbol);
+            Utf8 utf8otherSymbol = new Utf8(otherSymbol.toString());
+
+
+
+            double otherMean = meanReturns.getOrDefault(utf8otherSymbol, 0.0);
             double covOld = covMatrix.getOrDefault(symbol, new HashMap<>())
                     .getOrDefault(otherSymbol, 0.0);
 
-            double retOther = symbol.equals(otherSymbol) ? retValue : otherMean;
+
+            double retOther = symbol.contentEquals(otherSymbol) ? retValue : otherMean;
 
             double deltaCov = ((retValue - oldMean) * (retOther - otherMean) - covOld) / newCount;
             double covNew = covOld + deltaCov;
 
-            covMatrix.computeIfAbsent(symbol, k -> new HashMap<>()).put(otherSymbol, covNew);
-            covMatrix.computeIfAbsent(otherSymbol, k -> new HashMap<>()).put(symbol, covNew);
+            if(covNew != 0.0 && !Double.isNaN(covNew)) {
+                covMatrix.computeIfAbsent(symbol, k -> new HashMap<>()).put(otherSymbol, covNew);
+                covMatrix.computeIfAbsent(otherSymbol, k -> new HashMap<>()).put(symbol, covNew);
+            }
         }
 
-        PortfolioStatsSchema updated = new PortfolioStatsSchema();
-        updated.setMeanReturns(meanReturns);
-        updated.setCovarianceMatrix(covMatrix);
-        updated.setTimestamp(Instant.now().toEpochMilli());
+        // Update the stats object directly
+        stats.setMeanReturns(meanReturns);
+        stats.setCovarianceMatrix(covMatrix);
+        stats.setTimestamp(Instant.now().toEpochMilli());
 
-        return updated;
+        return stats;
     }
 
-    private Map<CharSequence, Map<CharSequence, Double>> deepCopyCovMatrix(Map<CharSequence, Map<CharSequence, Double>> original) {
-        Map<CharSequence, Map<CharSequence, Double>> copy = new HashMap<>();
-        for (Map.Entry<CharSequence, Map<CharSequence, Double>> entry : original.entrySet()) {
-            Map<CharSequence, Double> innerCopy = new HashMap<>(entry.getValue());
-            copy.put(entry.getKey(), innerCopy);
-        }
-        return copy;
-    }
+//    private Map<CharSequence, Map<CharSequence, Double>> deepCopyCovMatrix(Map<CharSequence, Map<CharSequence, Double>> original) {
+//        Map<CharSequence, Map<CharSequence, Double>> copy = new HashMap<>();
+//        for (Map.Entry<CharSequence, Map<CharSequence, Double>> entry : original.entrySet()) {
+//            Map<CharSequence, Double> innerCopy = new HashMap<>(entry.getValue());
+//            copy.put(entry.getKey(), innerCopy);
+//        }
+//        return copy;
+//    }
 }

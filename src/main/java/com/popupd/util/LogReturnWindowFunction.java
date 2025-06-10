@@ -34,7 +34,7 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
 
             double logReturn = Math.log(lastPrice / firstPrice);
 
-            collector.collect(new StockReturn(s, logReturn, lastPriceTime));
+            collector.collect(new StockReturn(s, logReturn, lastPriceTime, "portf1"));
         }
 
         }

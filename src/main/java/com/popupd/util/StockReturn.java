@@ -11,17 +11,28 @@ public class StockReturn {
     private double returnValue;
     private String timestamp;
 
+    private String portfolioId;
+
 
     public StockReturn() {}
 
-    public StockReturn(String ticker, double returnValue, String timestamp) {
+    public StockReturn(String ticker, double returnValue, String timestamp, String portfolioId) {
         this.ticker = ticker;
         this.returnValue = returnValue;
         this.timestamp = timestamp;
+        this.portfolioId = portfolioId;
     }
 
     public String getTicker() {
         return ticker;
+    }
+
+    public String getPortfolioId() {
+        return portfolioId;
+    }
+
+    public void setPortfolioId(String portfolioId) {
+        this.portfolioId = portfolioId;
     }
 
     public void setTicker(String ticker) {

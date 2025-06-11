@@ -37,22 +37,16 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
     ) throws Exception {
         PortfolioStatsSchema currentStats = globalStats.value();
 
-        // Initialize the state if it's null
         if (currentStats == null) {
             return;
         }
 
-        // Update the stats
-        synchronized (currentStats) {
+        PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
 
-            PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
+        globalStats.update(updatedStats);
 
-            // Update the state
-            globalStats.update(updatedStats);
+        collector.collect(updatedStats);
 
-            // Optionally, produce the updated stats downstream (if needed)
-            collector.collect(updatedStats);
-        }
     }
 
     @Override
@@ -76,33 +70,39 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
 
         if(oldMean != 0.0 ) {
-            meanReturns.put(symbol, newMean);
+            meanReturns.put(utf8Symbol, newMean);
         }
 
 
 
         for (CharSequence otherSymbol : meanReturns.keySet()) {
-            Utf8 utf8otherSymbol = new Utf8(otherSymbol.toString());
 
+            Utf8 utf8OtherSymbol = new Utf8(otherSymbol.toString());
 
+            double otherMean = meanReturns.getOrDefault(utf8OtherSymbol, 0.0);
 
-            double otherMean = meanReturns.getOrDefault(utf8otherSymbol, 0.0);
-            double covOld = covMatrix.getOrDefault(symbol, new HashMap<>())
-                    .getOrDefault(otherSymbol, 0.0);
+            if(otherMean == 0.0 && !Double.isNaN(otherMean)) {
+                continue;
+            }
 
+            double covOld = covMatrix.getOrDefault(utf8Symbol, new HashMap<>())
+                    .getOrDefault(utf8OtherSymbol, 0.0);
 
-            double retOther = symbol.contentEquals(otherSymbol) ? retValue : otherMean;
+            if(covOld == 0.0 && !Double.isNaN(covOld)) {
+                continue;
+            }
+
+            double retOther = utf8Symbol.compareTo(utf8OtherSymbol) == 0 ? retValue : otherMean;
 
             double deltaCov = ((retValue - oldMean) * (retOther - otherMean) - covOld) / newCount;
+
             double covNew = covOld + deltaCov;
 
-            if(covNew != 0.0 && !Double.isNaN(covNew)) {
-                covMatrix.computeIfAbsent(symbol, k -> new HashMap<>()).put(otherSymbol, covNew);
-                covMatrix.computeIfAbsent(otherSymbol, k -> new HashMap<>()).put(symbol, covNew);
-            }
+            covMatrix.computeIfAbsent(utf8Symbol, k -> new HashMap<>()).put(utf8OtherSymbol, covNew);
+            covMatrix.computeIfAbsent(utf8OtherSymbol, k -> new HashMap<>()).put(utf8Symbol, covNew);
+
         }
 
-        // Update the stats object directly
         stats.setMeanReturns(meanReturns);
         stats.setCovarianceMatrix(covMatrix);
         stats.setTimestamp(Instant.now().toEpochMilli());
@@ -110,12 +110,4 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         return stats;
     }
 
-//    private Map<CharSequence, Map<CharSequence, Double>> deepCopyCovMatrix(Map<CharSequence, Map<CharSequence, Double>> original) {
-//        Map<CharSequence, Map<CharSequence, Double>> copy = new HashMap<>();
-//        for (Map.Entry<CharSequence, Map<CharSequence, Double>> entry : original.entrySet()) {
-//            Map<CharSequence, Double> innerCopy = new HashMap<>(entry.getValue());
-//            copy.put(entry.getKey(), innerCopy);
-//        }
-//        return copy;
-//    }
 }

@@ -192,31 +192,7 @@ public class WeightsUpdate {
 //
 //
 //        updatedPortfolioStats.sinkTo(kafkaSink);
-
-
 //        updatedPortfolioStats.print();
-
-//        DataStream<PortfolioStatsSchema> updatedStatsStream = logReturnsStream
-//                .connect(broadcastPortfolioStats)
-//                .process(new PortfolioStatsUpdater(portfolioStatsDescriptor));
-//
-//        updatedStatsStream.print();
-
-//        DataStream<PortfolioStatsSchema> updatedPortfolioStatsStream = portfolioStatsStream
-//                .connect(logReturnsStream)
-//                .process(new PortfolioStatsUpdateFunction()).setParallelism(1);
-//        DataStream<PortfolioStatsSchema> updatedPortfoliStatsStream =  logReturnsStream
-//                .keyBy(StockReturn::getTicker)
-//                .flatMap(new StatsUpdaterFlatMapFunction());
-
-
-
-//        KafkaSink<PortfolioStatsSchema> statsSink = KafkaSink.<PortfolioStatsSchema>builder()
-//                .setBootstrapServers("localhost:9092")
-//                .setRecordSerializer(KafkaRecordSerializationSchema<PortfolioStatsSchema>) // Avro/JSON serializer
-//                .setTopic("portf_stats")
-//                .build();
-//        updatedStatsStream.sinkTo(statsSink);
 
         DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
                 .connect(logReturnsStream.keyBy(StockReturn::getTicker))

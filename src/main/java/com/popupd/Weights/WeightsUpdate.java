@@ -59,7 +59,7 @@ public class WeightsUpdate {
 
         KafkaSource<WeightStockSchema> weightSource = KafkaSource.<WeightStockSchema>builder()
                 .setBootstrapServers("localhost:9092")
-                .setTopics("stock_weights")
+                .setTopics("stockWeights")
                 .setGroupId("flink-weights-"+ UUID.randomUUID().toString())
                 .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(new WeightStockDeserializationSchema())
@@ -177,6 +177,12 @@ public class WeightsUpdate {
                 .connect(keyedStatsStream)
                 .process(new PortfolioUpdate())
                 .name("Portfolio Stats Update").setParallelism(1);
+
+
+        DataStream<PortfolioMetrics> portfolioMetric = weightStream
+                .keyBy(WeightStockSchema::getPortfolioId)
+                .connect(updatedPortfolioStats.keyBy(PortfolioStatsSchema::getPortfolioId))
+                .process(new PortfolioMetricsFunction()).setParallelism(1);
 
 
 

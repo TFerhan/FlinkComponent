@@ -14,10 +14,10 @@ import org.apache.avro.message.SchemaStore;
 
 @org.apache.avro.specific.AvroGenerated
 public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-    private static final long serialVersionUID = -6463100941676444637L;
+    private static final long serialVersionUID = 4150276358804763178L;
 
 
-    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"WeightStockSchema\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"time\",\"type\":\"string\"},{\"name\":\"ticker\",\"type\":\"string\"},{\"name\":\"weight\",\"type\":\"string\"}]}");
+    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"WeightStockSchema\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"time\",\"type\":\"string\"},{\"name\":\"portfolio_id\",\"type\":\"string\"},{\"name\":\"ticker\",\"type\":\"string\"},{\"name\":\"weight\",\"type\":\"string\"}]}");
     public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
 
     private static final SpecificData MODEL$ = new SpecificData();
@@ -74,6 +74,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
     }
 
     private java.lang.CharSequence time;
+    private java.lang.CharSequence portfolio_id;
     private java.lang.CharSequence ticker;
     private java.lang.CharSequence weight;
 
@@ -87,11 +88,13 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
     /**
      * All-args constructor.
      * @param time The new value for time
+     * @param portfolio_id The new value for portfolio_id
      * @param ticker The new value for ticker
      * @param weight The new value for weight
      */
-    public WeightStockSchema(java.lang.CharSequence time, java.lang.CharSequence ticker, java.lang.CharSequence weight) {
+    public WeightStockSchema(java.lang.CharSequence time, java.lang.CharSequence portfolio_id, java.lang.CharSequence ticker, java.lang.CharSequence weight) {
         this.time = time;
+        this.portfolio_id = portfolio_id;
         this.ticker = ticker;
         this.weight = weight;
     }
@@ -107,8 +110,9 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
     public java.lang.Object get(int field$) {
         switch (field$) {
             case 0: return time;
-            case 1: return ticker;
-            case 2: return weight;
+            case 1: return portfolio_id;
+            case 2: return ticker;
+            case 3: return weight;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
     }
@@ -119,8 +123,9 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
     public void put(int field$, java.lang.Object value$) {
         switch (field$) {
             case 0: time = (java.lang.CharSequence)value$; break;
-            case 1: ticker = (java.lang.CharSequence)value$; break;
-            case 2: weight = (java.lang.CharSequence)value$; break;
+            case 1: portfolio_id = (java.lang.CharSequence)value$; break;
+            case 2: ticker = (java.lang.CharSequence)value$; break;
+            case 3: weight = (java.lang.CharSequence)value$; break;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
     }
@@ -140,6 +145,23 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
      */
     public void setTime(java.lang.CharSequence value) {
         this.time = value;
+    }
+
+    /**
+     * Gets the value of the 'portfolio_id' field.
+     * @return The value of the 'portfolio_id' field.
+     */
+    public java.lang.CharSequence getPortfolioId() {
+        return portfolio_id;
+    }
+
+
+    /**
+     * Sets the value of the 'portfolio_id' field.
+     * @param value the value to set.
+     */
+    public void setPortfolioId(java.lang.CharSequence value) {
+        this.portfolio_id = value;
     }
 
     /**
@@ -218,6 +240,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
             implements org.apache.avro.data.RecordBuilder<WeightStockSchema> {
 
         private java.lang.CharSequence time;
+        private java.lang.CharSequence portfolio_id;
         private java.lang.CharSequence ticker;
         private java.lang.CharSequence weight;
 
@@ -236,13 +259,17 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
                 this.time = data().deepCopy(fields()[0].schema(), other.time);
                 fieldSetFlags()[0] = other.fieldSetFlags()[0];
             }
-            if (isValidValue(fields()[1], other.ticker)) {
-                this.ticker = data().deepCopy(fields()[1].schema(), other.ticker);
+            if (isValidValue(fields()[1], other.portfolio_id)) {
+                this.portfolio_id = data().deepCopy(fields()[1].schema(), other.portfolio_id);
                 fieldSetFlags()[1] = other.fieldSetFlags()[1];
             }
-            if (isValidValue(fields()[2], other.weight)) {
-                this.weight = data().deepCopy(fields()[2].schema(), other.weight);
+            if (isValidValue(fields()[2], other.ticker)) {
+                this.ticker = data().deepCopy(fields()[2].schema(), other.ticker);
                 fieldSetFlags()[2] = other.fieldSetFlags()[2];
+            }
+            if (isValidValue(fields()[3], other.weight)) {
+                this.weight = data().deepCopy(fields()[3].schema(), other.weight);
+                fieldSetFlags()[3] = other.fieldSetFlags()[3];
             }
         }
 
@@ -256,13 +283,17 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
                 this.time = data().deepCopy(fields()[0].schema(), other.time);
                 fieldSetFlags()[0] = true;
             }
-            if (isValidValue(fields()[1], other.ticker)) {
-                this.ticker = data().deepCopy(fields()[1].schema(), other.ticker);
+            if (isValidValue(fields()[1], other.portfolio_id)) {
+                this.portfolio_id = data().deepCopy(fields()[1].schema(), other.portfolio_id);
                 fieldSetFlags()[1] = true;
             }
-            if (isValidValue(fields()[2], other.weight)) {
-                this.weight = data().deepCopy(fields()[2].schema(), other.weight);
+            if (isValidValue(fields()[2], other.ticker)) {
+                this.ticker = data().deepCopy(fields()[2].schema(), other.ticker);
                 fieldSetFlags()[2] = true;
+            }
+            if (isValidValue(fields()[3], other.weight)) {
+                this.weight = data().deepCopy(fields()[3].schema(), other.weight);
+                fieldSetFlags()[3] = true;
             }
         }
 
@@ -307,6 +338,46 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
         }
 
         /**
+         * Gets the value of the 'portfolio_id' field.
+         * @return The value.
+         */
+        public java.lang.CharSequence getPortfolioId() {
+            return portfolio_id;
+        }
+
+
+        /**
+         * Sets the value of the 'portfolio_id' field.
+         * @param value The value of 'portfolio_id'.
+         * @return This builder.
+         */
+        public com.popupd.util.WeightStockSchema.Builder setPortfolioId(java.lang.CharSequence value) {
+            validate(fields()[1], value);
+            this.portfolio_id = value;
+            fieldSetFlags()[1] = true;
+            return this;
+        }
+
+        /**
+         * Checks whether the 'portfolio_id' field has been set.
+         * @return True if the 'portfolio_id' field has been set, false otherwise.
+         */
+        public boolean hasPortfolioId() {
+            return fieldSetFlags()[1];
+        }
+
+
+        /**
+         * Clears the value of the 'portfolio_id' field.
+         * @return This builder.
+         */
+        public com.popupd.util.WeightStockSchema.Builder clearPortfolioId() {
+            portfolio_id = null;
+            fieldSetFlags()[1] = false;
+            return this;
+        }
+
+        /**
          * Gets the value of the 'ticker' field.
          * @return The value.
          */
@@ -321,9 +392,9 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          * @return This builder.
          */
         public com.popupd.util.WeightStockSchema.Builder setTicker(java.lang.CharSequence value) {
-            validate(fields()[1], value);
+            validate(fields()[2], value);
             this.ticker = value;
-            fieldSetFlags()[1] = true;
+            fieldSetFlags()[2] = true;
             return this;
         }
 
@@ -332,7 +403,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          * @return True if the 'ticker' field has been set, false otherwise.
          */
         public boolean hasTicker() {
-            return fieldSetFlags()[1];
+            return fieldSetFlags()[2];
         }
 
 
@@ -342,7 +413,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          */
         public com.popupd.util.WeightStockSchema.Builder clearTicker() {
             ticker = null;
-            fieldSetFlags()[1] = false;
+            fieldSetFlags()[2] = false;
             return this;
         }
 
@@ -361,9 +432,9 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          * @return This builder.
          */
         public com.popupd.util.WeightStockSchema.Builder setWeight(java.lang.CharSequence value) {
-            validate(fields()[2], value);
+            validate(fields()[3], value);
             this.weight = value;
-            fieldSetFlags()[2] = true;
+            fieldSetFlags()[3] = true;
             return this;
         }
 
@@ -372,7 +443,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          * @return True if the 'weight' field has been set, false otherwise.
          */
         public boolean hasWeight() {
-            return fieldSetFlags()[2];
+            return fieldSetFlags()[3];
         }
 
 
@@ -382,7 +453,7 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
          */
         public com.popupd.util.WeightStockSchema.Builder clearWeight() {
             weight = null;
-            fieldSetFlags()[2] = false;
+            fieldSetFlags()[3] = false;
             return this;
         }
 
@@ -392,8 +463,9 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
             try {
                 WeightStockSchema record = new WeightStockSchema();
                 record.time = fieldSetFlags()[0] ? this.time : (java.lang.CharSequence) defaultValue(fields()[0]);
-                record.ticker = fieldSetFlags()[1] ? this.ticker : (java.lang.CharSequence) defaultValue(fields()[1]);
-                record.weight = fieldSetFlags()[2] ? this.weight : (java.lang.CharSequence) defaultValue(fields()[2]);
+                record.portfolio_id = fieldSetFlags()[1] ? this.portfolio_id : (java.lang.CharSequence) defaultValue(fields()[1]);
+                record.ticker = fieldSetFlags()[2] ? this.ticker : (java.lang.CharSequence) defaultValue(fields()[2]);
+                record.weight = fieldSetFlags()[3] ? this.weight : (java.lang.CharSequence) defaultValue(fields()[3]);
                 return record;
             } catch (org.apache.avro.AvroMissingFieldException e) {
                 throw e;
@@ -428,6 +500,8 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
     {
         out.writeString(this.time);
 
+        out.writeString(this.portfolio_id);
+
         out.writeString(this.ticker);
 
         out.writeString(this.weight);
@@ -441,22 +515,28 @@ public class WeightStockSchema extends org.apache.avro.specific.SpecificRecordBa
         if (fieldOrder == null) {
             this.time = in.readString(this.time instanceof Utf8 ? (Utf8)this.time : null);
 
+            this.portfolio_id = in.readString(this.portfolio_id instanceof Utf8 ? (Utf8)this.portfolio_id : null);
+
             this.ticker = in.readString(this.ticker instanceof Utf8 ? (Utf8)this.ticker : null);
 
             this.weight = in.readString(this.weight instanceof Utf8 ? (Utf8)this.weight : null);
 
         } else {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 switch (fieldOrder[i].pos()) {
                     case 0:
                         this.time = in.readString(this.time instanceof Utf8 ? (Utf8)this.time : null);
                         break;
 
                     case 1:
-                        this.ticker = in.readString(this.ticker instanceof Utf8 ? (Utf8)this.ticker : null);
+                        this.portfolio_id = in.readString(this.portfolio_id instanceof Utf8 ? (Utf8)this.portfolio_id : null);
                         break;
 
                     case 2:
+                        this.ticker = in.readString(this.ticker instanceof Utf8 ? (Utf8)this.ticker : null);
+                        break;
+
+                    case 3:
                         this.weight = in.readString(this.weight instanceof Utf8 ? (Utf8)this.weight : null);
                         break;
 

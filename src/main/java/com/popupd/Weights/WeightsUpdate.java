@@ -57,12 +57,20 @@ public class WeightsUpdate {
                 .setDeserializer(new BourseDataDeserializationSchema())
                 .build();
 
-        KafkaSource<WeightStockSchema> weightSource = KafkaSource.<WeightStockSchema>builder()
+//        KafkaSource<WeightStockSchema> weightSource = KafkaSource.<WeightStockSchema>builder()
+//                .setBootstrapServers("localhost:9092")
+//                .setTopics("stockWeights")
+//                .setGroupId("flink-weights-"+ UUID.randomUUID().toString())
+//                .setStartingOffsets(OffsetsInitializer.latest())
+//                .setDeserializer(new WeightStockDeserializationSchema())
+//                .build();
+
+        KafkaSource<WeightSchema> weightS = KafkaSource.<WeightSchema>builder()
                 .setBootstrapServers("localhost:9092")
-                .setTopics("stockWeights")
+                .setTopics("Weights")
                 .setGroupId("flink-weights-"+ UUID.randomUUID().toString())
-                .setStartingOffsets(OffsetsInitializer.latest())
-                .setDeserializer(new WeightStockDeserializationSchema())
+                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setDeserializer(new WeightDeserializationSchema())
                 .build();
 
 
@@ -119,17 +127,23 @@ public class WeightsUpdate {
                 "Kafka Prices Source"
         ).returns(BourseData.class);
 
-        DataStreamSource<WeightStockSchema> weightStream = (DataStreamSource<WeightStockSchema>) env.fromSource(
-                weightSource,
-                watermarkWeightStrategy,
-                "Kafka Weights Source"
-        ).returns(WeightStockSchema.class);
+//        DataStreamSource<WeightStockSchema> weightStream = (DataStreamSource<WeightStockSchema>) env.fromSource(
+//                weightSource,
+//                watermarkWeightStrategy,
+//                "Kafka Weights Source"
+//        ).returns(WeightStockSchema.class);
 
         DataStreamSource<PortfolioStatsSchema> portfolioStatsStream = (DataStreamSource<PortfolioStatsSchema>) env.fromSource(
                 portfolioStatsSource,
                 WatermarkStrategy.noWatermarks(),
                 "Kafka Portfolio Stats Source"
         ).returns(PortfolioStatsSchema.class);
+
+        DataStreamSource<WeightSchema> w8Stream = (DataStreamSource<WeightSchema>) env.fromSource(
+                weightS,
+                WatermarkStrategy.noWatermarks(),
+                "Weights Source"
+        ).returns(WeightSchema.class);
 
 
 
@@ -155,8 +169,8 @@ public class WeightsUpdate {
         KeyedStream<BourseData, String> keyedPricesStream = pricesStream
                 .keyBy(data -> data.getTicker().toString());
 
-        KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
-                .keyBy(data -> data.getTicker().toString());
+//        KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
+//                .keyBy(data -> data.getTicker().toString());
 
         DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .process(new LogReturnWindowFunction()).setParallelism(1);
@@ -179,10 +193,12 @@ public class WeightsUpdate {
                 .name("Portfolio Stats Update").setParallelism(1);
 
 
-        DataStream<PortfolioMetrics> portfolioMetric = weightStream
-                .keyBy(WeightStockSchema::getPortfolioId)
+        DataStream<PortfolioMetrics> portfolioMetric = w8Stream
+                .keyBy(WeightSchema::getPortfolioId)
                 .connect(updatedPortfolioStats.keyBy(PortfolioStatsSchema::getPortfolioId))
                 .process(new PortfolioMetricsFunction()).setParallelism(1);
+
+        portfolioMetric.print();
 
 
 
@@ -200,15 +216,16 @@ public class WeightsUpdate {
 //        updatedPortfolioStats.sinkTo(kafkaSink);
 //        updatedPortfolioStats.print();
 
-        DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
-                .connect(logReturnsStream.keyBy(StockReturn::getTicker))
-                .process(new WeightReturnMultiplicationFunction()).setParallelism(1);
-
-
-
-        DataStream<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
-                .windowAll(TumblingEventTimeWindows.of(Time.seconds(5)))
-                .process(new CumulativeWeightedReturnFunction()).setParallelism(1);
+//        DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream
+//                .connect(logReturnsStream.keyBy(StockReturn::getTicker))
+//                .process(new WeightReturnMultiplicationFunction()).setParallelism(1);
+//
+//
+//
+//
+//        DataStream<PortfolioCumulativeReturn> portfolioReturn = weightedReturns
+//                .windowAll(TumblingEventTimeWindows.of(Time.seconds(5)))
+//                .process(new CumulativeWeightedReturnFunction()).setParallelism(1);
 
 
                 ;

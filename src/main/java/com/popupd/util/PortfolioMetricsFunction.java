@@ -1,5 +1,6 @@
 package com.popupd.util;
 
+import org.apache.avro.util.Utf8;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -7,11 +8,13 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
-public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, WeightStockSchema, PortfolioStatsSchema, PortfolioMetrics> {
+import java.util.Map;
+
+public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics> {
 
     private transient ValueState<PortfolioStatsSchema> portfolioStatsState;
 
-    private transient ValueState<WeightStockSchema> weightStockState;
+    private transient ValueState<WeightSchema> weightStockState;
 
     @Override
     public void open(Configuration config) throws Exception {
@@ -21,34 +24,74 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
                 new ValueStateDescriptor<>("portfolioStats", statsTypeInfo);
         portfolioStatsState = getRuntimeContext().getState(statsDescriptor);
 
-        TypeInformation<WeightStockSchema> weightTypeInfo = TypeInformation.of(WeightStockSchema.class);
-        ValueStateDescriptor<WeightStockSchema> weightDescriptor =
+        TypeInformation<WeightSchema> weightTypeInfo = TypeInformation.of(WeightSchema.class);
+        ValueStateDescriptor<WeightSchema> weightDescriptor =
                 new ValueStateDescriptor<>("weightStock", weightTypeInfo);
         weightStockState = getRuntimeContext().getState(weightDescriptor);
     }
 
     @Override
-    public void processElement1(WeightStockSchema weightStockSchema, KeyedCoProcessFunction<String, WeightStockSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
-        weightStockState.update(weightStockSchema);
+    public void processElement1(WeightSchema WeightSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
+        weightStockState.update(WeightSchema);
         PortfolioStatsSchema currentStats = portfolioStatsState.value();
 
         if (currentStats == null) {
             return;
         }
 
-        PortfolioMetrics updatedMetrics = calculateMetrics(weightStockSchema, currentStats);
+        PortfolioMetrics updatedMetrics = calculateMetrics(WeightSchema, currentStats);
         collector.collect(updatedMetrics);
 
     }
 
-    private PortfolioMetrics calculateMetrics(WeightStockSchema weightStockSchema, PortfolioStatsSchema currentStats) {
-        return new PortfolioMetrics();
+    private PortfolioMetrics calculateMetrics(WeightSchema w8, PortfolioStatsSchema currentStats) {
+
+        PortfolioMetrics metrics =  new PortfolioMetrics();
+        Map<CharSequence, Double> weights = w8.getWeights();
+        Map<CharSequence, Double> meanReturns = currentStats.getMeanReturns();
+        Map<CharSequence, Map<CharSequence, Double>> covMatrix = currentStats.getCovarianceMatrix();
+
+
+        double expectedReturns = weights.entrySet().stream()
+                .mapToDouble(entry -> entry.getValue() * meanReturns.getOrDefault(entry.getKey(), 0.0))
+                .sum();
+        System.out.println("Expected Returns: " + expectedReturns);
+
+        double variance = 0.0;
+        for(Map.Entry<CharSequence, Double> entry1 : weights.entrySet()){
+
+            Utf8 i = (Utf8) entry1.getKey();
+            double w_i = entry1.getValue();
+
+            for(Map.Entry<CharSequence, Double> entry2 : weights.entrySet()){
+                Utf8 j = (Utf8) entry2.getKey();
+                double w_j = entry2.getValue();
+                double cov_ij = covMatrix.getOrDefault(i, Map.of()).getOrDefault(j, 0.0);
+                variance += w_i * w_j * cov_ij;
+
+            }
+
+        }
+        System.out.println("Variance: " + variance);
+        double risk = Math.sqrt(variance);
+
+        double sharpeRatio = (expectedReturns  - 0.0018) / risk;
+        System.out.println("Sharpe Ratio: " + sharpeRatio);
+
+        metrics.setExpectedReturn(expectedReturns);
+        metrics.setRisk(risk);
+        metrics.setSharpRatio(sharpeRatio);
+        metrics.setTimestamp(System.currentTimeMillis());
+
+        return metrics;
+
+
     }
 
     @Override
-    public void processElement2(PortfolioStatsSchema portfolioStatsSchema, KeyedCoProcessFunction<String, WeightStockSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
+    public void processElement2(PortfolioStatsSchema portfolioStatsSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
         portfolioStatsState.update(portfolioStatsSchema);
-        WeightStockSchema currentWeight = weightStockState.value();
+        WeightSchema currentWeight = weightStockState.value();
 
         if (currentWeight == null){
             return;
@@ -58,4 +101,7 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
         collector.collect(updatedMetrics);
 
     }
+
+
+
 }

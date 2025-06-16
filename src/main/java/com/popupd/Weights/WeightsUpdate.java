@@ -48,12 +48,16 @@ public class WeightsUpdate {
 
         // Configure watermark interval
         env.getConfig().setAutoWatermarkInterval(1000);
+        env.setParallelism(3);
+
+        OffsetsInitializer latest = OffsetsInitializer.latest();
+        OffsetsInitializer earliest = OffsetsInitializer.earliest();
 
         KafkaSource<BourseData> priceSource = KafkaSource.<BourseData>builder()
                 .setBootstrapServers("localhost:9092")
                 .setTopics("intraday-stock-prices")
-                .setGroupId("flink-prices-"+ UUID.randomUUID().toString())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId("flink-prices-group")
+                .setStartingOffsets(latest)
                 .setDeserializer(new BourseDataDeserializationSchema())
                 .build();
 
@@ -68,8 +72,8 @@ public class WeightsUpdate {
         KafkaSource<WeightSchema> weightS = KafkaSource.<WeightSchema>builder()
                 .setBootstrapServers("localhost:9092")
                 .setTopics("Weights")
-                .setGroupId("flink-weights-"+ UUID.randomUUID().toString())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId("flink-weights-group")
+                .setStartingOffsets(latest)
                 .setDeserializer(new WeightDeserializationSchema())
                 .build();
 
@@ -78,8 +82,8 @@ public class WeightsUpdate {
         KafkaSource<PortfolioStatsSchema> portfolioStatsSource = KafkaSource.<PortfolioStatsSchema>builder()
                 .setBootstrapServers("localhost:9092")
                 .setTopics("portfStats")
-                .setGroupId("flink-consumer-" + UUID.randomUUID().toString())
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setGroupId("flink-portfStats-group")
+                .setStartingOffsets(latest)
                 .setDeserializer(new PortfolioStatsDeserializationSchema())
                 .build();
 
@@ -145,6 +149,8 @@ public class WeightsUpdate {
                 "Weights Source"
         ).returns(WeightSchema.class);
 
+        w8Stream.print();
+
 
 
 //        SingleOutputStreamOperator<Tuple2<String, PortfolioStatsSchema>> keyedStatsStream =
@@ -173,7 +179,7 @@ public class WeightsUpdate {
 //                .keyBy(data -> data.getTicker().toString());
 
         DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
-                .process(new LogReturnWindowFunction()).setParallelism(1);
+                .process(new LogReturnWindowFunction());
 
 
 
@@ -190,30 +196,49 @@ public class WeightsUpdate {
         DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream.keyBy(StockReturn::getPortfolioId)
                 .connect(keyedStatsStream)
                 .process(new PortfolioUpdate())
-                .name("Portfolio Stats Update").setParallelism(1);
+                .name("Portfolio Stats Update");
+
+        KafkaSink<PortfolioStatsSchema> kafkaSink = KafkaSink.<PortfolioStatsSchema>builder()
+                .setBootstrapServers("localhost:9092")
+                .setRecordSerializer(
+                        KafkaRecordSerializationSchema.builder()
+                                .setTopic("portfUpdatedStats")
+                                .setValueSerializationSchema(new PortfolioStatsAvroSerializationSchema())
+                                .build()
+                )
+                .build();
+//
+//
+        updatedPortfolioStats.sinkTo(kafkaSink);
 
 
         DataStream<PortfolioMetrics> portfolioMetric = w8Stream
                 .keyBy(WeightSchema::getPortfolioId)
                 .connect(updatedPortfolioStats.keyBy(PortfolioStatsSchema::getPortfolioId))
-                .process(new PortfolioMetricsFunction()).setParallelism(1);
+                .process(new PortfolioMetricsFunction());
+
+
+
+
+
+        KafkaSink<PortfolioMetrics> portfMetricSink = KafkaSink.<PortfolioMetrics>builder()
+                .setBootstrapServers("localhost:9092")
+                .setRecordSerializer(
+                        KafkaRecordSerializationSchema.builder()
+                                .setTopic("portfMetrics")
+                                .setValueSerializationSchema(new PortfolioMetricsAvroSerialization())
+                                .build()
+                )
+                .build();
+
+        portfolioMetric.sinkTo(portfMetricSink)
+                .name("Kafka Portfolio Metrics Sink");
+
 
         portfolioMetric.print();
 
 
 
-//        KafkaSink<PortfolioStatsSchema> kafkaSink = KafkaSink.<PortfolioStatsSchema>builder()
-//                .setBootstrapServers("localhost:9092")
-//                .setRecordSerializer(
-//                        KafkaRecordSerializationSchema.builder()
-//                                .setTopic("portf_stats")
-//                                .setValueSerializationSchema(new PortfolioStatsAvroSerializationSchema())
-//                                .build()
-//                )
-//                .build();
-//
-//
-//        updatedPortfolioStats.sinkTo(kafkaSink);
 //        updatedPortfolioStats.print();
 
 //        DataStream<WeightedReturn> weightedReturns =  keyedWeightsStream

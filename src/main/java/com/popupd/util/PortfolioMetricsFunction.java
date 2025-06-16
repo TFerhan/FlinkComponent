@@ -55,7 +55,7 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
         double expectedReturns = weights.entrySet().stream()
                 .mapToDouble(entry -> entry.getValue() * meanReturns.getOrDefault(entry.getKey(), 0.0))
                 .sum();
-        System.out.println("Expected Returns: " + expectedReturns);
+
 
         double variance = 0.0;
         for(Map.Entry<CharSequence, Double> entry1 : weights.entrySet()){
@@ -72,11 +72,11 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
             }
 
         }
-        System.out.println("Variance: " + variance);
+
         double risk = Math.sqrt(variance);
 
         double sharpeRatio = (expectedReturns  - 0.0018) / risk;
-        System.out.println("Sharpe Ratio: " + sharpeRatio);
+
 
         metrics.setExpectedReturn(expectedReturns);
         metrics.setRisk(risk);

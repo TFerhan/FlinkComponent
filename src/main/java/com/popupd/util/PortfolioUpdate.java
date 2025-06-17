@@ -45,6 +45,8 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
         globalStats.update(updatedStats);
 
+
+
         collector.collect(updatedStats);
 
     }
@@ -52,6 +54,7 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
     @Override
     public void processElement2(PortfolioStatsSchema newStats, Context ctx, Collector<PortfolioStatsSchema> out) throws Exception {
         globalStats.update(newStats);
+
 
     }
 
@@ -62,11 +65,14 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         Map<CharSequence, Double> meanReturns = stats.getMeanReturns();
         Map<CharSequence, Map<CharSequence, Double>> covMatrix = stats.getCovarianceMatrix();
 
-        int count = 100;
+        int count = 1000;
         int newCount = count + 1;
 
+
         double oldMean = meanReturns.getOrDefault(utf8Symbol, 0.0);
+
         double newMean = oldMean + (retValue - oldMean) / newCount;
+
 
 
         if(oldMean != 0.0 ) {
@@ -81,14 +87,14 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
             double otherMean = meanReturns.getOrDefault(utf8OtherSymbol, 0.0);
 
-            if(otherMean == 0.0 && !Double.isNaN(otherMean)) {
+            if(otherMean == 0.0 ) {
                 continue;
             }
 
             double covOld = covMatrix.getOrDefault(utf8Symbol, new HashMap<>())
                     .getOrDefault(utf8OtherSymbol, 0.0);
 
-            if(covOld == 0.0 && !Double.isNaN(covOld)) {
+            if(covOld == 0.0 ) {
                 continue;
             }
 

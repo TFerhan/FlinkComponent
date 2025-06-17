@@ -178,8 +178,10 @@ public class WeightsUpdate {
 //        KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
 //                .keyBy(data -> data.getTicker().toString());
 
-        DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(5)))
+        DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(3)))
                 .process(new LogReturnWindowFunction());
+
+
 
 
 

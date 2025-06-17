@@ -33,13 +33,16 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
     @Override
     public void processElement1(WeightSchema WeightSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
         weightStockState.update(WeightSchema);
+
         PortfolioStatsSchema currentStats = portfolioStatsState.value();
 
         if (currentStats == null) {
+
             return;
         }
 
         PortfolioMetrics updatedMetrics = calculateMetrics(WeightSchema, currentStats);
+
         collector.collect(updatedMetrics);
 
     }
@@ -91,6 +94,7 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
     @Override
     public void processElement2(PortfolioStatsSchema portfolioStatsSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
         portfolioStatsState.update(portfolioStatsSchema);
+
         WeightSchema currentWeight = weightStockState.value();
 
         if (currentWeight == null){

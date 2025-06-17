@@ -25,6 +25,7 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
             firstPrice += random.nextGaussian();
             double lastPrice = firstPrice;
 
+
             String  lastPriceTime = null;
             while (iterator.hasNext()) {
                 BourseData current = iterator.next();

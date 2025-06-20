@@ -8,6 +8,8 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics> {
@@ -15,6 +17,8 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
     private transient ValueState<PortfolioStatsSchema> portfolioStatsState;
 
     private transient ValueState<WeightSchema> weightStockState;
+
+    private transient ValueState<Map> lastEmittedMetrics;
 
     @Override
     public void open(Configuration config) throws Exception {
@@ -28,11 +32,15 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
         ValueStateDescriptor<WeightSchema> weightDescriptor =
                 new ValueStateDescriptor<>("weightStock", weightTypeInfo);
         weightStockState = getRuntimeContext().getState(weightDescriptor);
+
+        ValueStateDescriptor<Map> lastEmittedHashDescriptor =
+                new ValueStateDescriptor<>("lastEmittedHash", TypeInformation.of(Map.class));
+        lastEmittedMetrics = getRuntimeContext().getState(lastEmittedHashDescriptor);
     }
 
     @Override
-    public void processElement1(WeightSchema WeightSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
-        weightStockState.update(WeightSchema);
+    public void processElement1(WeightSchema w8, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
+        weightStockState.update(w8);
 
         PortfolioStatsSchema currentStats = portfolioStatsState.value();
 
@@ -41,9 +49,14 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
             return;
         }
 
-        PortfolioMetrics updatedMetrics = calculateMetrics(WeightSchema, currentStats);
+        PortfolioMetrics updatedMetrics = calculateMetrics(w8, currentStats);
+        Map<Double, Double> updated = new HashMap<>();
+        updated.put(updatedMetrics.getExpectedReturn(), updatedMetrics.getRisk());
 
-        collector.collect(updatedMetrics);
+        if (shouldEmit(updated)) {
+            collector.collect(updatedMetrics);
+        }
+
 
     }
 
@@ -102,8 +115,27 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
         }
 
         PortfolioMetrics updatedMetrics = calculateMetrics(currentWeight, portfolioStatsSchema);
-        collector.collect(updatedMetrics);
+        Map<Double, Double> updated = new HashMap<>();
+        updated.put(updatedMetrics.getExpectedReturn(), updatedMetrics.getRisk());
 
+        if (shouldEmit(updated)) {
+
+            collector.collect(updatedMetrics);
+        }
+
+    }
+
+    private boolean shouldEmit(Map<Double, Double> metrics) throws IOException {
+        Map<Double, Double> lastEmitted = lastEmittedMetrics.value();
+
+        if (lastEmitted != null && lastEmitted.equals(metrics)) {
+            return false;
+        } else {
+            lastEmittedMetrics.update(metrics);
+
+
+            return true;
+        }
     }
 
 

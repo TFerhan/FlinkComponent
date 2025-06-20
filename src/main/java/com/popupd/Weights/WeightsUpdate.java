@@ -131,6 +131,8 @@ public class WeightsUpdate {
                 "Kafka Prices Source"
         ).returns(BourseData.class);
 
+        pricesStream.print();
+
 //        DataStreamSource<WeightStockSchema> weightStream = (DataStreamSource<WeightStockSchema>) env.fromSource(
 //                weightSource,
 //                watermarkWeightStrategy,
@@ -178,7 +180,7 @@ public class WeightsUpdate {
 //        KeyedStream<WeightStockSchema, String> keyedWeightsStream = weightStream
 //                .keyBy(data -> data.getTicker().toString());
 
-        DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingEventTimeWindows.of(Time.seconds(3)))
+        DataStream<StockReturn> logReturnsStream = keyedPricesStream.window(TumblingProcessingTimeWindows.of(Time.seconds(2)))
                 .process(new LogReturnWindowFunction());
 
 
@@ -189,7 +191,7 @@ public class WeightsUpdate {
 
 
 
-//        logReturnsStream.print();
+        logReturnsStream.print();
 
 //        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
 //                .connect(keyedStatsStream)
@@ -212,6 +214,8 @@ public class WeightsUpdate {
 //
 //
         updatedPortfolioStats.sinkTo(kafkaSink);
+
+//        updatedPortfolioStats.print();
 
 
         DataStream<PortfolioMetrics> portfolioMetric = w8Stream
@@ -237,7 +241,7 @@ public class WeightsUpdate {
                 .name("Kafka Portfolio Metrics Sink");
 
 
-        portfolioMetric.print();
+//        portfolioMetric.print();
 
 
 

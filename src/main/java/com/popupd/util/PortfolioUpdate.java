@@ -10,6 +10,7 @@ import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,8 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
     private transient ValueState<PortfolioStatsSchema> globalStats;
 
+
+
     @Override
     public void open(Configuration config) {
         TypeInformation<PortfolioStatsSchema> typeInfo = TypeInformation.of(PortfolioStatsSchema.class);
@@ -27,6 +30,7 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
                 new ValueStateDescriptor<>("globalPortfolioStats", typeInfo);
 
         globalStats = getRuntimeContext().getState(statsDescriptor);
+
     }
 
     @Override
@@ -44,16 +48,25 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
 
         globalStats.update(updatedStats);
-
-
-
         collector.collect(updatedStats);
+
+
+
 
     }
 
     @Override
     public void processElement2(PortfolioStatsSchema newStats, Context ctx, Collector<PortfolioStatsSchema> out) throws Exception {
-        globalStats.update(newStats);
+        PortfolioStatsSchema currentStats = globalStats.value();
+        if (currentStats == null) {
+            globalStats.update(newStats);
+            return;
+        }
+
+
+//        globalStats.update(newStats);
+
+
 
 
     }
@@ -115,5 +128,7 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
         return stats;
     }
+
+
 
 }

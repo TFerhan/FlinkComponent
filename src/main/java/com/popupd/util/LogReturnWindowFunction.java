@@ -22,18 +22,35 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
             Random random = new Random();
             BourseData first = iterator.next();
             double firstPrice = Double.parseDouble(first.getFieldOpeningPrice().toString());
+            System.out.println(s + " first price: " + firstPrice);
             firstPrice += random.nextGaussian();
             double lastPrice = firstPrice;
 
 
-            String  lastPriceTime = null;
+            String lastPriceTime = first.getFieldLastTradedTime().toString();
             while (iterator.hasNext()) {
                 BourseData current = iterator.next();
                 lastPrice = Double.parseDouble(current.getFieldCoursCourant().toString());
                 lastPriceTime = current.getFieldLastTradedTime().toString();
             }
 
+            System.out.println(s + " last price: " + lastPrice);
+
+            if(firstPrice == 0.0){
+                return;
+            }
+
             double logReturn = Math.log(lastPrice / firstPrice);
+
+
+            if(Double.isNaN(logReturn)) {
+
+            System.out.println("Log return is zero or NaN " + logReturn + " for " + s + ", skipping.");
+
+                return;
+            }
+
+
 
             collector.collect(new StockReturn(s, logReturn, lastPriceTime, "portf1"));
         }

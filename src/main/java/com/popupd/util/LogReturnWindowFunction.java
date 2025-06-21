@@ -22,7 +22,7 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
             Random random = new Random();
             BourseData first = iterator.next();
             double firstPrice = Double.parseDouble(first.getFieldOpeningPrice().toString());
-            System.out.println(s + " first price: " + firstPrice);
+
             firstPrice += random.nextGaussian();
             double lastPrice = firstPrice;
 
@@ -34,7 +34,7 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
                 lastPriceTime = current.getFieldLastTradedTime().toString();
             }
 
-            System.out.println(s + " last price: " + lastPrice);
+
 
             if(firstPrice == 0.0){
                 return;

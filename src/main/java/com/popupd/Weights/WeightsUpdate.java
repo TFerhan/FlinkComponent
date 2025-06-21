@@ -151,7 +151,7 @@ public class WeightsUpdate {
                 "Weights Source"
         ).returns(WeightSchema.class);
 
-        w8Stream.print();
+//        w8Stream.print();
 
 
 
@@ -191,7 +191,7 @@ public class WeightsUpdate {
 
 
 
-        logReturnsStream.print();
+//        logReturnsStream.print();
 
 //        DataStream<PortfolioStatsSchema> updatedPortfolioStats = logReturnsStream
 //                .connect(keyedStatsStream)
@@ -241,7 +241,7 @@ public class WeightsUpdate {
                 .name("Kafka Portfolio Metrics Sink");
 
 
-//        portfolioMetric.print();
+        portfolioMetric.print();
 
 
 

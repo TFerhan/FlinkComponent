@@ -14,10 +14,10 @@ import org.apache.avro.message.SchemaStore;
 
 @org.apache.avro.specific.AvroGenerated
 public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-    private static final long serialVersionUID = 5437937854065455664L;
+    private static final long serialVersionUID = -808439701768449827L;
 
 
-    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PortfolioMetrics\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"risk\",\"type\":\"double\"},{\"name\":\"expectedReturn\",\"type\":\"double\"},{\"name\":\"sharpRatio\",\"type\":\"double\"},{\"name\":\"timestamp\",\"type\":\"long\"}]}");
+    public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PortfolioMetrics\",\"namespace\":\"com.popupd.util\",\"fields\":[{\"name\":\"portfolioId\",\"type\":\"string\"},{\"name\":\"risk\",\"type\":\"double\"},{\"name\":\"expectedReturn\",\"type\":\"double\"},{\"name\":\"sharpRatio\",\"type\":\"double\"},{\"name\":\"timestamp\",\"type\":\"long\"}]}");
     public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
 
     private static final SpecificData MODEL$ = new SpecificData();
@@ -73,6 +73,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
         return DECODER.decode(b);
     }
 
+    private java.lang.CharSequence portfolioId;
     private double risk;
     private double expectedReturn;
     private double sharpRatio;
@@ -87,12 +88,14 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
 
     /**
      * All-args constructor.
+     * @param portfolioId The new value for portfolioId
      * @param risk The new value for risk
      * @param expectedReturn The new value for expectedReturn
      * @param sharpRatio The new value for sharpRatio
      * @param timestamp The new value for timestamp
      */
-    public PortfolioMetrics(java.lang.Double risk, java.lang.Double expectedReturn, java.lang.Double sharpRatio, java.lang.Long timestamp) {
+    public PortfolioMetrics(java.lang.CharSequence portfolioId, java.lang.Double risk, java.lang.Double expectedReturn, java.lang.Double sharpRatio, java.lang.Long timestamp) {
+        this.portfolioId = portfolioId;
         this.risk = risk;
         this.expectedReturn = expectedReturn;
         this.sharpRatio = sharpRatio;
@@ -109,10 +112,11 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
     @Override
     public java.lang.Object get(int field$) {
         switch (field$) {
-            case 0: return risk;
-            case 1: return expectedReturn;
-            case 2: return sharpRatio;
-            case 3: return timestamp;
+            case 0: return portfolioId;
+            case 1: return risk;
+            case 2: return expectedReturn;
+            case 3: return sharpRatio;
+            case 4: return timestamp;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
     }
@@ -122,12 +126,30 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
     @SuppressWarnings(value="unchecked")
     public void put(int field$, java.lang.Object value$) {
         switch (field$) {
-            case 0: risk = (java.lang.Double)value$; break;
-            case 1: expectedReturn = (java.lang.Double)value$; break;
-            case 2: sharpRatio = (java.lang.Double)value$; break;
-            case 3: timestamp = (java.lang.Long)value$; break;
+            case 0: portfolioId = (java.lang.CharSequence)value$; break;
+            case 1: risk = (java.lang.Double)value$; break;
+            case 2: expectedReturn = (java.lang.Double)value$; break;
+            case 3: sharpRatio = (java.lang.Double)value$; break;
+            case 4: timestamp = (java.lang.Long)value$; break;
             default: throw new IndexOutOfBoundsException("Invalid index: " + field$);
         }
+    }
+
+    /**
+     * Gets the value of the 'portfolioId' field.
+     * @return The value of the 'portfolioId' field.
+     */
+    public java.lang.CharSequence getPortfolioId() {
+        return portfolioId;
+    }
+
+
+    /**
+     * Sets the value of the 'portfolioId' field.
+     * @param value the value to set.
+     */
+    public void setPortfolioId(java.lang.CharSequence value) {
+        this.portfolioId = value;
     }
 
     /**
@@ -239,6 +261,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
     public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<PortfolioMetrics>
             implements org.apache.avro.data.RecordBuilder<PortfolioMetrics> {
 
+        private java.lang.CharSequence portfolioId;
         private double risk;
         private double expectedReturn;
         private double sharpRatio;
@@ -255,21 +278,25 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          */
         private Builder(com.popupd.util.PortfolioMetrics.Builder other) {
             super(other);
-            if (isValidValue(fields()[0], other.risk)) {
-                this.risk = data().deepCopy(fields()[0].schema(), other.risk);
+            if (isValidValue(fields()[0], other.portfolioId)) {
+                this.portfolioId = data().deepCopy(fields()[0].schema(), other.portfolioId);
                 fieldSetFlags()[0] = other.fieldSetFlags()[0];
             }
-            if (isValidValue(fields()[1], other.expectedReturn)) {
-                this.expectedReturn = data().deepCopy(fields()[1].schema(), other.expectedReturn);
+            if (isValidValue(fields()[1], other.risk)) {
+                this.risk = data().deepCopy(fields()[1].schema(), other.risk);
                 fieldSetFlags()[1] = other.fieldSetFlags()[1];
             }
-            if (isValidValue(fields()[2], other.sharpRatio)) {
-                this.sharpRatio = data().deepCopy(fields()[2].schema(), other.sharpRatio);
+            if (isValidValue(fields()[2], other.expectedReturn)) {
+                this.expectedReturn = data().deepCopy(fields()[2].schema(), other.expectedReturn);
                 fieldSetFlags()[2] = other.fieldSetFlags()[2];
             }
-            if (isValidValue(fields()[3], other.timestamp)) {
-                this.timestamp = data().deepCopy(fields()[3].schema(), other.timestamp);
+            if (isValidValue(fields()[3], other.sharpRatio)) {
+                this.sharpRatio = data().deepCopy(fields()[3].schema(), other.sharpRatio);
                 fieldSetFlags()[3] = other.fieldSetFlags()[3];
+            }
+            if (isValidValue(fields()[4], other.timestamp)) {
+                this.timestamp = data().deepCopy(fields()[4].schema(), other.timestamp);
+                fieldSetFlags()[4] = other.fieldSetFlags()[4];
             }
         }
 
@@ -279,22 +306,66 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          */
         private Builder(com.popupd.util.PortfolioMetrics other) {
             super(SCHEMA$, MODEL$);
-            if (isValidValue(fields()[0], other.risk)) {
-                this.risk = data().deepCopy(fields()[0].schema(), other.risk);
+            if (isValidValue(fields()[0], other.portfolioId)) {
+                this.portfolioId = data().deepCopy(fields()[0].schema(), other.portfolioId);
                 fieldSetFlags()[0] = true;
             }
-            if (isValidValue(fields()[1], other.expectedReturn)) {
-                this.expectedReturn = data().deepCopy(fields()[1].schema(), other.expectedReturn);
+            if (isValidValue(fields()[1], other.risk)) {
+                this.risk = data().deepCopy(fields()[1].schema(), other.risk);
                 fieldSetFlags()[1] = true;
             }
-            if (isValidValue(fields()[2], other.sharpRatio)) {
-                this.sharpRatio = data().deepCopy(fields()[2].schema(), other.sharpRatio);
+            if (isValidValue(fields()[2], other.expectedReturn)) {
+                this.expectedReturn = data().deepCopy(fields()[2].schema(), other.expectedReturn);
                 fieldSetFlags()[2] = true;
             }
-            if (isValidValue(fields()[3], other.timestamp)) {
-                this.timestamp = data().deepCopy(fields()[3].schema(), other.timestamp);
+            if (isValidValue(fields()[3], other.sharpRatio)) {
+                this.sharpRatio = data().deepCopy(fields()[3].schema(), other.sharpRatio);
                 fieldSetFlags()[3] = true;
             }
+            if (isValidValue(fields()[4], other.timestamp)) {
+                this.timestamp = data().deepCopy(fields()[4].schema(), other.timestamp);
+                fieldSetFlags()[4] = true;
+            }
+        }
+
+        /**
+         * Gets the value of the 'portfolioId' field.
+         * @return The value.
+         */
+        public java.lang.CharSequence getPortfolioId() {
+            return portfolioId;
+        }
+
+
+        /**
+         * Sets the value of the 'portfolioId' field.
+         * @param value The value of 'portfolioId'.
+         * @return This builder.
+         */
+        public com.popupd.util.PortfolioMetrics.Builder setPortfolioId(java.lang.CharSequence value) {
+            validate(fields()[0], value);
+            this.portfolioId = value;
+            fieldSetFlags()[0] = true;
+            return this;
+        }
+
+        /**
+         * Checks whether the 'portfolioId' field has been set.
+         * @return True if the 'portfolioId' field has been set, false otherwise.
+         */
+        public boolean hasPortfolioId() {
+            return fieldSetFlags()[0];
+        }
+
+
+        /**
+         * Clears the value of the 'portfolioId' field.
+         * @return This builder.
+         */
+        public com.popupd.util.PortfolioMetrics.Builder clearPortfolioId() {
+            portfolioId = null;
+            fieldSetFlags()[0] = false;
+            return this;
         }
 
         /**
@@ -312,9 +383,9 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder setRisk(double value) {
-            validate(fields()[0], value);
+            validate(fields()[1], value);
             this.risk = value;
-            fieldSetFlags()[0] = true;
+            fieldSetFlags()[1] = true;
             return this;
         }
 
@@ -323,7 +394,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return True if the 'risk' field has been set, false otherwise.
          */
         public boolean hasRisk() {
-            return fieldSetFlags()[0];
+            return fieldSetFlags()[1];
         }
 
 
@@ -332,7 +403,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder clearRisk() {
-            fieldSetFlags()[0] = false;
+            fieldSetFlags()[1] = false;
             return this;
         }
 
@@ -351,9 +422,9 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder setExpectedReturn(double value) {
-            validate(fields()[1], value);
+            validate(fields()[2], value);
             this.expectedReturn = value;
-            fieldSetFlags()[1] = true;
+            fieldSetFlags()[2] = true;
             return this;
         }
 
@@ -362,7 +433,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return True if the 'expectedReturn' field has been set, false otherwise.
          */
         public boolean hasExpectedReturn() {
-            return fieldSetFlags()[1];
+            return fieldSetFlags()[2];
         }
 
 
@@ -371,7 +442,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder clearExpectedReturn() {
-            fieldSetFlags()[1] = false;
+            fieldSetFlags()[2] = false;
             return this;
         }
 
@@ -390,9 +461,9 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder setSharpRatio(double value) {
-            validate(fields()[2], value);
+            validate(fields()[3], value);
             this.sharpRatio = value;
-            fieldSetFlags()[2] = true;
+            fieldSetFlags()[3] = true;
             return this;
         }
 
@@ -401,7 +472,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return True if the 'sharpRatio' field has been set, false otherwise.
          */
         public boolean hasSharpRatio() {
-            return fieldSetFlags()[2];
+            return fieldSetFlags()[3];
         }
 
 
@@ -410,7 +481,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder clearSharpRatio() {
-            fieldSetFlags()[2] = false;
+            fieldSetFlags()[3] = false;
             return this;
         }
 
@@ -429,9 +500,9 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder setTimestamp(long value) {
-            validate(fields()[3], value);
+            validate(fields()[4], value);
             this.timestamp = value;
-            fieldSetFlags()[3] = true;
+            fieldSetFlags()[4] = true;
             return this;
         }
 
@@ -440,7 +511,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return True if the 'timestamp' field has been set, false otherwise.
          */
         public boolean hasTimestamp() {
-            return fieldSetFlags()[3];
+            return fieldSetFlags()[4];
         }
 
 
@@ -449,7 +520,7 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
          * @return This builder.
          */
         public com.popupd.util.PortfolioMetrics.Builder clearTimestamp() {
-            fieldSetFlags()[3] = false;
+            fieldSetFlags()[4] = false;
             return this;
         }
 
@@ -458,10 +529,11 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
         public PortfolioMetrics build() {
             try {
                 PortfolioMetrics record = new PortfolioMetrics();
-                record.risk = fieldSetFlags()[0] ? this.risk : (java.lang.Double) defaultValue(fields()[0]);
-                record.expectedReturn = fieldSetFlags()[1] ? this.expectedReturn : (java.lang.Double) defaultValue(fields()[1]);
-                record.sharpRatio = fieldSetFlags()[2] ? this.sharpRatio : (java.lang.Double) defaultValue(fields()[2]);
-                record.timestamp = fieldSetFlags()[3] ? this.timestamp : (java.lang.Long) defaultValue(fields()[3]);
+                record.portfolioId = fieldSetFlags()[0] ? this.portfolioId : (java.lang.CharSequence) defaultValue(fields()[0]);
+                record.risk = fieldSetFlags()[1] ? this.risk : (java.lang.Double) defaultValue(fields()[1]);
+                record.expectedReturn = fieldSetFlags()[2] ? this.expectedReturn : (java.lang.Double) defaultValue(fields()[2]);
+                record.sharpRatio = fieldSetFlags()[3] ? this.sharpRatio : (java.lang.Double) defaultValue(fields()[3]);
+                record.timestamp = fieldSetFlags()[4] ? this.timestamp : (java.lang.Long) defaultValue(fields()[4]);
                 return record;
             } catch (org.apache.avro.AvroMissingFieldException e) {
                 throw e;
@@ -494,6 +566,8 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
     @Override public void customEncode(org.apache.avro.io.Encoder out)
             throws java.io.IOException
     {
+        out.writeString(this.portfolioId);
+
         out.writeDouble(this.risk);
 
         out.writeDouble(this.expectedReturn);
@@ -509,6 +583,8 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
     {
         org.apache.avro.Schema.Field[] fieldOrder = in.readFieldOrderIfDiff();
         if (fieldOrder == null) {
+            this.portfolioId = in.readString(this.portfolioId instanceof Utf8 ? (Utf8)this.portfolioId : null);
+
             this.risk = in.readDouble();
 
             this.expectedReturn = in.readDouble();
@@ -518,21 +594,25 @@ public class PortfolioMetrics extends org.apache.avro.specific.SpecificRecordBas
             this.timestamp = in.readLong();
 
         } else {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 switch (fieldOrder[i].pos()) {
                     case 0:
-                        this.risk = in.readDouble();
+                        this.portfolioId = in.readString(this.portfolioId instanceof Utf8 ? (Utf8)this.portfolioId : null);
                         break;
 
                     case 1:
-                        this.expectedReturn = in.readDouble();
+                        this.risk = in.readDouble();
                         break;
 
                     case 2:
-                        this.sharpRatio = in.readDouble();
+                        this.expectedReturn = in.readDouble();
                         break;
 
                     case 3:
+                        this.sharpRatio = in.readDouble();
+                        break;
+
+                    case 4:
                         this.timestamp = in.readLong();
                         break;
 

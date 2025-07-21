@@ -21,8 +21,6 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
     private transient ValueState<PortfolioStatsSchema> globalStats;
 
-
-
     @Override
     public void open(Configuration config) {
         TypeInformation<PortfolioStatsSchema> typeInfo = TypeInformation.of(PortfolioStatsSchema.class);
@@ -46,11 +44,8 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         }
 
         PortfolioStatsSchema updatedStats = updateStats(currentStats, stockReturn);
-
         globalStats.update(updatedStats);
         collector.collect(updatedStats);
-
-
 
 
     }
@@ -60,14 +55,8 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         PortfolioStatsSchema currentStats = globalStats.value();
         if (currentStats == null) {
             globalStats.update(newStats);
-            return;
+
         }
-
-
-//        globalStats.update(newStats);
-
-
-
 
     }
 
@@ -77,6 +66,7 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
         Utf8 utf8Symbol = new Utf8(symbol);
         Map<CharSequence, Double> meanReturns = stats.getMeanReturns();
         Map<CharSequence, Map<CharSequence, Double>> covMatrix = stats.getCovarianceMatrix();
+
 
         int count = 1000;
         int newCount = count + 1;
@@ -128,7 +118,5 @@ public class PortfolioUpdate extends KeyedCoProcessFunction<String, StockReturn,
 
         return stats;
     }
-
-
 
 }

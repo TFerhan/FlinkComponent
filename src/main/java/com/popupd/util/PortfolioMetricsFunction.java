@@ -42,6 +42,8 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
     public void processElement1(WeightSchema w8, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
         weightStockState.update(w8);
 
+        System.out.println("Received weight update: " + w8);
+
         PortfolioStatsSchema currentStats = portfolioStatsState.value();
 
         if (currentStats == null) {
@@ -69,8 +71,9 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
 
 
         double expectedReturns = weights.entrySet().stream()
-                .mapToDouble(entry -> entry.getValue() * meanReturns.getOrDefault(entry.getKey(), 0.0))
+                .mapToDouble(entry -> entry.getValue() * meanReturns.getOrDefault((Utf8)  entry.getKey(), 0.0))
                 .sum();
+
 
 
         double variance = 0.0;
@@ -85,19 +88,22 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
                 double cov_ij = covMatrix.getOrDefault(i, Map.of()).getOrDefault(j, 0.0);
                 variance += w_i * w_j * cov_ij;
 
+
             }
 
         }
 
         double risk = Math.sqrt(variance);
 
-        double sharpeRatio = (expectedReturns  - 0.0018) / risk;
+
+        double sharpeRatio = Math.sqrt(52)*(expectedReturns  - 0.0018) / risk;
 
 
         metrics.setExpectedReturn(expectedReturns);
         metrics.setRisk(risk);
         metrics.setSharpRatio(sharpeRatio);
         metrics.setTimestamp(System.currentTimeMillis());
+        metrics.setPortfolioId(w8.getPortfolioId());
 
         return metrics;
 
@@ -107,6 +113,7 @@ public class PortfolioMetricsFunction extends KeyedCoProcessFunction<String, Wei
     @Override
     public void processElement2(PortfolioStatsSchema portfolioStatsSchema, KeyedCoProcessFunction<String, WeightSchema, PortfolioStatsSchema, PortfolioMetrics>.Context context, Collector<PortfolioMetrics> collector) throws Exception {
         portfolioStatsState.update(portfolioStatsSchema);
+
 
         WeightSchema currentWeight = weightStockState.value();
 

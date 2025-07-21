@@ -12,8 +12,6 @@ import java.util.Random;
 
 public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, StockReturn, String, TimeWindow> {
 
-
-
     @Override
     public void process(String s, ProcessWindowFunction<BourseData, StockReturn, String, TimeWindow>.Context context, Iterable<BourseData> iterable, Collector<StockReturn> collector) throws Exception {
 
@@ -34,14 +32,11 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
                 lastPriceTime = current.getFieldLastTradedTime().toString();
             }
 
-
-
             if(firstPrice == 0.0){
                 return;
             }
 
             double logReturn = Math.log(lastPrice / firstPrice);
-
 
             if(Double.isNaN(logReturn)) {
 
@@ -49,8 +44,6 @@ public class LogReturnWindowFunction extends ProcessWindowFunction<BourseData, S
 
                 return;
             }
-
-
 
             collector.collect(new StockReturn(s, logReturn, lastPriceTime, "portf1"));
         }

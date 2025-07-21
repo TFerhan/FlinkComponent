@@ -232,6 +232,7 @@ public class PortfolioStatsSchema extends org.apache.avro.specific.SpecificRecor
         }
     }
 
+
     /**
      * RecordBuilder for PortfolioStatsSchema instances.
      */
